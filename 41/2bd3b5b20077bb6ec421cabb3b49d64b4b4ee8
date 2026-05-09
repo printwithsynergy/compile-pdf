@@ -1,0 +1,69 @@
+src/compile_pdf/api/middleware.py
+  s_8664a88c9c4458::t_2aeee163aa1b3a 1-75
+src/compile_pdf/api/__init__.py
+  s_8664a88c9c4458::t_7ab80b91476a67 1-8
+scripts/consume_surface_audit.py
+  s_8664a88c9c4458::t_2acd4bf2fcb5cd 1-252
+src/compile_pdf/cache.py
+  s_8664a88c9c4458::t_80f28df229df73 1-137
+src/compile_pdf/api/auth.py
+  s_8664a88c9c4458::t_39fbe16f0e4fb2 1-109
+src/compile_pdf/marks/__init__.py
+  s_8664a88c9c4458::t_1f264b2f5b48f7 1-12
+pyproject.toml
+  s_8664a88c9c4458::t_8a0dae8915160b 1-115
+README.md
+  s_8664a88c9c4458::t_c516119162ac7a 1-67
+tests/test_cache.py
+  s_8664a88c9c4458::t_f4cd0cf472159c 1-87
+.github/workflows/ci.yml
+  s_8664a88c9c4458::t_597a14da39b297 1-51
+tests/test_version.py
+  s_8664a88c9c4458::t_7a5230c70b0c5e 1-39
+src/compile_pdf/api/main.py
+  s_8664a88c9c4458::t_06f26596989309 1-227
+LICENSE
+  s_8664a88c9c4458::t_2d95c730dc79a4 1-23
+src/compile_pdf/rewrite/__init__.py
+  s_8664a88c9c4458::t_a4d7277d0cff9a 1-19
+CHANGELOG.md
+  s_8664a88c9c4458::t_693358c038dc6a 1-56
+schemas/v1/.gitkeep
+  s_8664a88c9c4458::t_6d4cf33c7f3d38 1-7
+.env.example
+  s_8664a88c9c4458::t_a5e63f96cf814a 1-71
+src/compile_pdf/version.py
+  s_8664a88c9c4458::t_da0296e41dfa0b 1-46
+Dockerfile
+  s_8664a88c9c4458::t_47c0180e476eb4 1-66
+tests/test_consume_surface_audit.py
+  s_8664a88c9c4458::t_031ba1dc166401 1-68
+tests/test_api_health.py
+  s_8664a88c9c4458::t_6c6fc5522a24c6 1-60
+src/compile_pdf/trap/__init__.py
+  s_8664a88c9c4458::t_f1c6111ce16c73 1-16
+src/compile_pdf/impose/__init__.py
+  s_8664a88c9c4458::t_6e26578a68b481 1-11
+src/compile_pdf/__init__.py
+  s_8664a88c9c4458::t_eac4fe457a4284 1-42
+.gitignore
+  s_8664a88c9c4458::t_c55492316011e8 1-68
+src/compile_pdf/cli/__init__.py
+  s_8664a88c9c4458::t_b7b74bb20e296f 1-130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "412bd3b5b20077bb6ec421cabb3b49d64b4b4ee8",
+  "prompts": {},
+  "sessions": {
+    "s_8664a88c9c4458": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fe66a82-fcf7-48ad-bbcc-f2ab4cafb917",
+        "model": "unknown"
+      },
+      "human_author": "Quincy Adams <quincy@thinkneverland.com>"
+    }
+  }
+}
