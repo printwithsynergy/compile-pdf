@@ -1,0 +1,7 @@
+# Per-producer JSON Schema documents land here as Phase 1.x ships:
+#   - rewrite-plan.schema.json (§2.2)
+#   - marks-template.schema.json (§3.1)
+#   - impose-plan.schema.json (§4.1)
+#   - trap-policy.schema.json (§5.1)
+#   - cjd.schema.json + cjd.xsd (§4.5.2)
+#   - compile-document.schema.json (lineage record shape)

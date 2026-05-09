@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+wheels/
+.installed.cfg
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# uv / virtualenvs
+.venv/
+venv/
+env/
+ENV/
+
+# Tests / coverage
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+.cache
+.hypothesis/
+coverage.xml
+*.cover
+nosetests.xml
+
+# Type checkers
+.mypy_cache/
+.pyre/
+.pytype/
+
+# Linters
+.ruff_cache/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Audit output
+reports/
+
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+*.log
+*.pid
+*.sock
+
+# Node (in case marketing repo shares root tooling later)
+node_modules/
+*.tsbuildinfo
