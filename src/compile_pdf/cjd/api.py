@@ -12,11 +12,12 @@ from __future__ import annotations
 import base64
 
 import structlog
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
 
 from compile_pdf.cjd.orchestrator import CjdOrderError, execute
 from compile_pdf.cjd.schema import CjdJob
+from compile_pdf.cjd.xml import CjdXmlError, parse_cjd_xml
 from compile_pdf.lineage.store import (
     LineageNotFoundError,
     default_store,
@@ -59,6 +60,50 @@ async def cjd_apply(job: CjdJob) -> CjdApplyResponse:
 
     logger.info(
         "cjd.apply.ok",
+        lineage_id=result.lineage_id,
+        steps=len(result.steps),
+        output_sha=result.output_pdf_sha256[:16],
+    )
+
+    return CjdApplyResponse(
+        output_pdf_b64=base64.b64encode(result.output_pdf_bytes).decode("ascii"),
+        output_pdf_sha256=result.output_pdf_sha256,
+        lineage_id=result.lineage_id,
+        steps=[_step_to_dict(s) for s in result.steps],
+        trap_diff=result.trap_diff,
+    )
+
+
+@cjd_router.post(
+    "/apply-xml",
+    response_model=CjdApplyResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def cjd_apply_xml(request: Request) -> CjdApplyResponse:
+    """XML-encoded variant of POST /v1/cjd/apply.
+
+    Body is a CJD XML envelope (per :mod:`compile_pdf.cjd.xml`); the
+    response shape matches the JSON endpoint exactly. Useful for
+    operators integrating Compile into JDF / PJTF pipelines that
+    already speak XML on the wire.
+    """
+    body = await request.body()
+    if not body:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="empty XML body")
+    try:
+        job = parse_cjd_xml(body)
+    except CjdXmlError as exc:
+        raise HTTPException(status_code=422, detail=f"CJD XML rejected: {exc}") from exc
+
+    try:
+        result = execute(job)
+    except CjdOrderError as exc:
+        raise HTTPException(status_code=422, detail=f"CJD ordering rejected: {exc}") from exc
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail=f"CJD job rejected: {exc}") from exc
+
+    logger.info(
+        "cjd.apply_xml.ok",
         lineage_id=result.lineage_id,
         steps=len(result.steps),
         output_sha=result.output_pdf_sha256[:16],
