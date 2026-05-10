@@ -58,3 +58,19 @@ def test_request_id_generated_when_absent():
     assert response.status_code == 200
     rid = response.headers.get("X-Compile-Request-Id")
     assert rid and len(rid) >= 8
+
+
+def test_healthz_exposes_celery_workers_field():
+    """Field defaults to 0 with no broker configured; presence is the
+    operational signal we care about."""
+    client = TestClient(app)
+    body = client.get("/v1/healthz").json()
+    assert "celery_workers" in body
+    assert body["celery_workers"] == 0
+
+
+def test_healthz_exposes_queue_depth_field():
+    client = TestClient(app)
+    body = client.get("/v1/healthz").json()
+    assert "queue_depth" in body
+    assert body["queue_depth"] == 0

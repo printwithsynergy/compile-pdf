@@ -50,6 +50,7 @@ class HealthResponse(BaseModel):
     instance_id: str
     cache_backend: str
     queue_depth: int = 0
+    celery_workers: int = 0
     ghostscript: bool = False
     codex_pdf_version: str
     codex_section_versions: dict[str, str] = Field(default_factory=dict)
@@ -147,12 +148,22 @@ async def healthz() -> HealthResponse:
         instance_id=INSTANCE_ID,
         cache_backend=os.environ.get("COMPILE_CACHE_BACKEND", "memory"),
         queue_depth=resolve_queue_depth(),
+        celery_workers=_resolve_celery_workers(),
         ghostscript=False,  # Per spec §1.11b — only trap may flip via [trap-gs] extra.
         codex_pdf_version=_resolve_codex_pdf_version(),
         codex_section_versions=compiled_versions,
         codex_live_section_versions=live_versions,
         version_skew=compiled_versions != live_versions,
     )
+
+
+def _resolve_celery_workers() -> int:
+    """Lazy import so the API still loads when Celery isn't configured."""
+    try:
+        from compile_pdf.tasks import detect_workers
+    except Exception:  # pragma: no cover — celery is a hard dep but be defensive
+        return 0
+    return detect_workers()
 
 
 @app.get("/v1/version", response_model=VersionResponse)
