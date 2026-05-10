@@ -25,6 +25,23 @@ def _empty_page(pdf: pikepdf.Pdf, width: float = 612.0, height: float = 792.0) -
     )
 
 
+def _printer_page(pdf: pikepdf.Pdf) -> pikepdf.Page:
+    """A page with declared TrimBox + BleedBox + slug margin — required
+    by the marks engine for slug anchors and bleed-corner anchors."""
+    return pikepdf.Page(
+        pdf.make_indirect(
+            pikepdf.Dictionary(
+                Type=pikepdf.Name.Page,
+                MediaBox=pikepdf.Array([0, 0, 612, 792]),
+                TrimBox=pikepdf.Array([36, 36, 576, 756]),
+                BleedBox=pikepdf.Array([18, 18, 594, 774]),
+                Resources=pikepdf.Dictionary(),
+                Contents=pdf.make_stream(b""),
+            )
+        )
+    )
+
+
 def build_pdf(
     *,
     pages: int = 1,
@@ -33,11 +50,12 @@ def build_pdf(
     add_ocg: str | None = None,
     add_javascript: bool = False,
     add_embedded_file: bool = False,
+    printer_pages: bool = False,
 ) -> bytes:
     """Build a tiny PDF with the requested attributes baked in."""
     pdf = pikepdf.new()
     for _ in range(pages):
-        pdf.pages.append(_empty_page(pdf))
+        pdf.pages.append(_printer_page(pdf) if printer_pages else _empty_page(pdf))
     if title is not None:
         pdf.docinfo[pikepdf.Name.Title] = pikepdf.String(title)
     if author is not None:
@@ -121,3 +139,14 @@ def js_pdf() -> bytes:
 @pytest.fixture
 def embedded_files_pdf() -> bytes:
     return build_pdf(pages=1, add_embedded_file=True)
+
+
+@pytest.fixture
+def printer_pdf() -> bytes:
+    """Single-page PDF with declared TrimBox/BleedBox + slug margin."""
+    return build_pdf(pages=1, printer_pages=True, title="Printer Page")
+
+
+@pytest.fixture
+def two_page_printer_pdf() -> bytes:
+    return build_pdf(pages=2, printer_pages=True, title="Two-up Printer")
