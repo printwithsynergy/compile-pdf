@@ -33,6 +33,7 @@ from starlette.responses import Response
 from compile_pdf.api.middleware import INSTANCE_ID, RequestIdMiddleware
 from compile_pdf.version import (
     CJD_SCHEMA_VERSION,
+    CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
     COMPILE_DOCUMENT_SCHEMA_VERSION,
     PRODUCER_SCHEMA_VERSIONS,
     VERSION,
@@ -72,10 +73,10 @@ class ContractResponse(BaseModel):
 def _resolve_codex_pdf_version() -> str:
     """Read codex_pdf wheel version Compile was deployed against."""
     try:
-        import codex_pdf
-        return getattr(codex_pdf, "__version__", "unknown")
+        from codex_pdf import __version__ as codex_version
     except ImportError:
         return "unknown"
+    return codex_version
 
 
 def _resolve_codex_section_versions() -> dict[str, str]:
@@ -85,11 +86,10 @@ def _resolve_codex_section_versions() -> dict[str, str]:
         from codex_pdf.geom import GEOM_SCHEMA_VERSION
     except ImportError:
         return {}
-    # codex-document schema is top-level; default 1.0.0 in 1.4.x line.
     return {
         "color": COLOR_SCHEMA_VERSION,
         "geom": GEOM_SCHEMA_VERSION,
-        "codex-document": "1.0.0",
+        "codex-document": CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
     }
 
 

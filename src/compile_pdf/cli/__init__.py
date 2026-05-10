@@ -17,6 +17,7 @@ import click
 
 from compile_pdf.version import (
     CJD_SCHEMA_VERSION,
+    CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
     COMPILE_DOCUMENT_SCHEMA_VERSION,
     PRODUCER_SCHEMA_VERSIONS,
     VERSION,
@@ -45,9 +46,9 @@ def version_cmd() -> None:
         payload["codex_section_versions"] = {
             "color": COLOR_SCHEMA_VERSION,
             "geom": GEOM_SCHEMA_VERSION,
-            "codex-document": "1.0.0",
+            "codex-document": CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
         }
-        from codex_pdf.version import VERSION as CODEX_VERSION  # type: ignore[attr-defined]
+        from codex_pdf.version import VERSION as CODEX_VERSION
 
         payload["codex_pdf_package_version"] = CODEX_VERSION
     except ImportError:

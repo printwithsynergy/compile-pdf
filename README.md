@@ -20,7 +20,7 @@ Four producers under one Python package, four FastAPI services in one Railway pr
 
 ## Status
 
-Pre-release scaffolding. See [`docs/`](./docs) for the design spec and implementation roadmap.
+Pre-release scaffolding. See [`COMPILE-IMPL-PLAN.md`](./COMPILE-IMPL-PLAN.md) for the phased roadmap and [`docs/`](./docs) for operator + integrator documentation.
 
 ## Install
 
@@ -59,8 +59,9 @@ CLI defaults to local-mode (in-process) when `COMPILE_API_BASE` is unset; otherw
 
 ## Docs
 
-- Design spec: [`COMPILE-DESIGN-SPEC.md`](../COMPILE-DESIGN-SPEC.md) (workspace root)
-- Implementation plan: [`COMPILE-IMPL-PLAN.md`](../COMPILE-IMPL-PLAN.md) (workspace root)
+- Design spec: [`COMPILE-DESIGN-SPEC.md`](./COMPILE-DESIGN-SPEC.md)
+- Implementation plan: [`COMPILE-IMPL-PLAN.md`](./COMPILE-IMPL-PLAN.md)
+- Operator + integrator docs: [`docs/`](./docs)
 
 ## License
 

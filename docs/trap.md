@@ -1,0 +1,86 @@
+---
+title: "Trap producer"
+description: "Ink-pair spread / choke trap with three engine slots — pure_python, ghostscript, external. Color resolution comes from codex_pdf.color; geometry from codex_pdf.geom.polygon_offset."
+group: "Reference"
+order: 13
+---
+
+# Trap producer
+
+`compile_pdf.trap` applies ink-pair spread / choke trap to a PDF.
+"Trap" compensates for press registration error by overlapping
+adjacent inks slightly, so a thin white seam doesn't appear at the
+boundary if the press drifts a hair off.
+
+## Three engine slots
+
+| Engine | Default? | Source | When to use |
+|---|---|---|---|
+| `pure_python` | yes (when Codex polygon_offset is available, i.e. codex 1.5+) | `codex_pdf.geom.polygon_offset` + `codex_pdf.color.*` | Default for all production traffic |
+| `ghostscript` | no | Ghostscript via `[trap-gs]` extra | Bootstrap fallback, parity testing |
+| `external` | no | Vendor (Esko / Heidelberg) via `[trap-external]` | Print-shops with vendor licensing |
+
+Engine selected via `COMPILE_TRAP_ENGINE` env on the trap container.
+Mismatched engines produce different output bytes — the
+`engine_fingerprint` field in the lineage record makes that
+observable.
+
+## Policy schema
+
+```json
+{
+  "schema_version": "1.0.0",
+  "default_trap_width_pt": 0.144,
+  "ink_pair_rules": [
+    { "from": "PMS 185", "to": "K",       "width_pt": 0.144, "direction": "spread" },
+    { "from": "Y",        "to": "PMS 185", "width_pt": 0.072, "direction": "choke"  }
+  ],
+  "neutral_density_source": "codex_extract",
+  "engine": "auto"
+}
+```
+
+`direction`:
+- **spread** — the lighter ink expands into the darker.
+- **choke**  — the lighter ink contracts away from the darker.
+
+Direction defaults can be derived from neutral-density values, which
+Compile reads from the Codex extract — no Compile-side density math.
+
+## Codex surface consumed
+
+- `codex_pdf.color.CodexSpotIntent` — spot-ink declaration on the input.
+- `codex_pdf.color.resolve_spot_swatch_color` — intent → device color.
+- `codex_pdf.color.delta_e_2000` — color-difference metric used to
+  verify trap quality (the trapped ink pair must satisfy a delta_e
+  budget).
+- `codex_pdf.geom.polygon_offset` — spread / choke offsets on the
+  ink-pair boundary polygon.
+
+No Compile-side color or geometry math.
+
+## trap-diff artifact
+
+Every `trap apply` emits a JSON artifact describing every trap
+operation applied — which ink pair, which page, which polygon, which
+engine fingerprint, what delta_e was achieved. Surfaced via:
+
+```bash
+compile-pdf trap-diff <lineage_id>
+```
+
+Lineage references the engine fingerprint, so a trap-diff can be
+re-verified against the same engine version even months later.
+
+## Determinism guarantee
+
+`pure_python` engine is bit-deterministic. `ghostscript` and
+`external` are deterministic per-engine-fingerprint but not
+cross-engine — switching engines on the same input produces a
+different (still valid) output PDF. The lineage record makes the
+choice explicit.
+
+## Status
+
+Skeleton. Lands in Phase 4 of
+[`COMPILE-IMPL-PLAN.md`](../COMPILE-IMPL-PLAN.md).
