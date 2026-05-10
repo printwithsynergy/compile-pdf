@@ -42,7 +42,7 @@ def _check_bearer(authorization: str | None) -> bool:
         return False
     if not authorization.lower().startswith("bearer "):
         return False
-    presented = authorization[len("Bearer "):].strip()
+    presented = authorization[len("Bearer ") :].strip()
     return secrets.compare_digest(presented.encode(), expected.encode())
 
 
@@ -72,7 +72,7 @@ def _check_basic(authorization: str | None) -> bool:
     import base64
 
     try:
-        decoded = base64.b64decode(authorization[len("Basic "):]).decode("utf-8")
+        decoded = base64.b64decode(authorization[len("Basic ") :]).decode("utf-8")
     except Exception:
         return False
     if ":" not in decoded:

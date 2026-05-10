@@ -101,6 +101,24 @@ plugins = ["pydantic.mypy"]
 module = "tests.*"
 disallow_untyped_defs = false
 
+# codex-pdf doesn't ship a py.typed marker yet. Compile imports its
+# published surface — let mypy treat the imports as Any rather than
+# fail strict on every line.
+[[tool.mypy.overrides]]
+module = ["codex_pdf", "codex_pdf.*"]
+ignore_missing_imports = true
+
+# Producer routers mount lazily; their api modules don't exist yet
+# (Phase 1.x). Suppress the import-untyped error until they ship.
+[[tool.mypy.overrides]]
+module = [
+    "compile_pdf.rewrite.api",
+    "compile_pdf.marks.api",
+    "compile_pdf.impose.api",
+    "compile_pdf.trap.api",
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

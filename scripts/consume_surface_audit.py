@@ -30,37 +30,56 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # --- Ban list (per spec §7.5) -----------------------------------------------
 
-BANNED_IMPORTS: frozenset[str] = frozenset({
-    # Direct Pantone JSON access bypasses the resolver — must use
-    # codex_pdf.color.load_pantone_reference() instead.
-    "codex_pdf.color.data.pantone_reference",
-    "codex_pdf.color.data",
-    # Clipper2 must go through codex_pdf.geom.polygon_* surfaces.
-    "pyclipr",
-})
+BANNED_IMPORTS: frozenset[str] = frozenset(
+    {
+        # Direct Pantone JSON access bypasses the resolver — must use
+        # codex_pdf.color.load_pantone_reference() instead.
+        "codex_pdf.color.data.pantone_reference",
+        "codex_pdf.color.data",
+        # Clipper2 must go through codex_pdf.geom.polygon_* surfaces.
+        "pyclipr",
+    }
+)
 """Modules Compile MUST NOT import directly. Each is a re-implementation
 shortcut that bypasses Codex's published surface."""
 
-BANNED_FUNCTION_NAMES: frozenset[str] = frozenset({
-    # Re-defining this would mimic codex_pdf.color.resolver's precedence
-    # ladder — a Codex surface, not a Compile concern.
-    "resolve_spot_swatch_color",
-    "match_nearest_pantone",
-    "load_pantone_reference",
-    "load_inkbook",
-})
+BANNED_FUNCTION_NAMES: frozenset[str] = frozenset(
+    {
+        # Re-defining this would mimic codex_pdf.color.resolver's precedence
+        # ladder — a Codex surface, not a Compile concern.
+        "resolve_spot_swatch_color",
+        "match_nearest_pantone",
+        "load_pantone_reference",
+        "load_inkbook",
+    }
+)
 """Function names that, if defined in Compile code, indicate
 Codex re-implementation. Allowed only inside ``tests/`` (test
 fixtures may name-shadow for stubbing)."""
 
-BANNED_CLASS_NAMES: frozenset[str] = frozenset({
-    # Geometry primitives — consume from codex_pdf.geom directly.
-    "Box", "Matrix", "Path", "TileGrid", "TileResult", "MarksZone", "CellPlacement",
-    # Document-shape — Compile reads CodexDocument; never defines its own.
-    "CodexDocument", "CodexPage", "CodexPageBoxes", "CodexPageResourcesRef",
-    "CodexInfoDict", "CodexColorSpace", "CodexSpotColorant", "CodexOCG",
-    "CodexTrapEvidence", "CodexDocumentSummary",
-})
+BANNED_CLASS_NAMES: frozenset[str] = frozenset(
+    {
+        # Geometry primitives — consume from codex_pdf.geom directly.
+        "Box",
+        "Matrix",
+        "Path",
+        "TileGrid",
+        "TileResult",
+        "MarksZone",
+        "CellPlacement",
+        # Document-shape — Compile reads CodexDocument; never defines its own.
+        "CodexDocument",
+        "CodexPage",
+        "CodexPageBoxes",
+        "CodexPageResourcesRef",
+        "CodexInfoDict",
+        "CodexColorSpace",
+        "CodexSpotColorant",
+        "CodexOCG",
+        "CodexTrapEvidence",
+        "CodexDocumentSummary",
+    }
+)
 """Class names that re-define Codex types. Allowed only inside ``tests/``."""
 
 EXEMPT_PATHS: tuple[str, ...] = (
@@ -159,22 +178,23 @@ def _check_import(node: ast.Import | ast.ImportFrom, file: str) -> Iterable[Viol
 
 def _check_definitions(tree: ast.AST, file: str) -> Iterable[Violation]:
     for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            if node.name in BANNED_FUNCTION_NAMES:
-                yield Violation(
-                    file=file,
-                    line=node.lineno,
-                    kind="banned_function_def",
-                    detail=f"function name `{node.name}` re-implements a Codex surface",
-                )
-        elif isinstance(node, ast.ClassDef):
-            if node.name in BANNED_CLASS_NAMES:
-                yield Violation(
-                    file=file,
-                    line=node.lineno,
-                    kind="banned_class_def",
-                    detail=f"class name `{node.name}` re-defines a Codex type",
-                )
+        if (
+            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name in BANNED_FUNCTION_NAMES
+        ):
+            yield Violation(
+                file=file,
+                line=node.lineno,
+                kind="banned_function_def",
+                detail=f"function name `{node.name}` re-implements a Codex surface",
+            )
+        elif isinstance(node, ast.ClassDef) and node.name in BANNED_CLASS_NAMES:
+            yield Violation(
+                file=file,
+                line=node.lineno,
+                kind="banned_class_def",
+                detail=f"class name `{node.name}` re-defines a Codex type",
+            )
 
 
 def _check_file(path: Path) -> Iterable[Violation]:

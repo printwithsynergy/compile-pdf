@@ -36,6 +36,13 @@ COMPILE_DOCUMENT_SCHEMA_VERSION = "1.0.0"
 """Top-level Compile-document schema version. Bumps when the lineage
 record shape itself changes."""
 
+CODEX_DOCUMENT_SCHEMA_VERSION_PIN = "1.0.0"
+"""Codex-document schema version Compile is built against. Codex does not
+yet publish this as a constant on `codex_pdf`, so we pin it here and
+surface it via /v1/healthz and /v1/contract for operators. Bump alongside
+codex when the codex-document model shape changes (codex 1.x line keeps
+this at 1.0.0)."""
+
 PRODUCER_SCHEMA_VERSIONS: dict[str, str] = {
     "rewrite": REWRITE_SCHEMA_VERSION,
     "marks": MARKS_SCHEMA_VERSION,

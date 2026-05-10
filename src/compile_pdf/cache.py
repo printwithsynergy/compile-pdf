@@ -59,9 +59,11 @@ def canonicalize_plan(plan: Mapping[str, Any] | list[Any] | str | int | float | 
         return plan
     if isinstance(plan, float):
         # Round-half-even via Decimal so the digest is portable.
-        quantized = Decimal(repr(plan)).quantize(
-            _PLAN_CANONICAL_NUMBER_QUANTIZE, rounding=ROUND_HALF_EVEN
-        ).normalize()
+        quantized = (
+            Decimal(repr(plan))
+            .quantize(_PLAN_CANONICAL_NUMBER_QUANTIZE, rounding=ROUND_HALF_EVEN)
+            .normalize()
+        )
         as_str = format(quantized, "f")
         # Re-parse so e.g. "1.0" stays a number in JSON, not a string.
         try:
@@ -124,14 +126,16 @@ def compute_cache_key(
     - ``canonical_plan_sha256`` — plan hashed via :func:`hash_canonical_plan`
     - ``input_sha256`` — sha256 of the raw input PDF bytes
     """
-    components = "|".join([
-        codex_document_schema_version,
-        codex_pdf_package_version,
-        color_schema_version,
-        geom_schema_version,
-        compile_version,
-        producer,
-        canonical_plan_sha256,
-        input_sha256,
-    ])
+    components = "|".join(
+        [
+            codex_document_schema_version,
+            codex_pdf_package_version,
+            color_schema_version,
+            geom_schema_version,
+            compile_version,
+            producer,
+            canonical_plan_sha256,
+            input_sha256,
+        ]
+    )
     return hashlib.sha256(components.encode("utf-8")).hexdigest()

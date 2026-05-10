@@ -42,9 +42,7 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
     ``request.state.request_id``, echoes in response headers, and binds it
     to the structlog context so every log line correlates."""
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         request_id = (
             request.headers.get("X-Compile-Request-Id")
             or request.headers.get("x-compile-request-id")

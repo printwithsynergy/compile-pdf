@@ -29,8 +29,7 @@ def test_banned_import_detected_via_synthetic_source(tmp_path, monkeypatch):
     bad_file = audit.ROOT / "src" / "compile_pdf" / "_temp_audit_test_violation.py"
     try:
         bad_file.write_text(
-            "from codex_pdf.color.data import pantone_reference\n"
-            "_ = pantone_reference\n",
+            "from codex_pdf.color.data import pantone_reference\n_ = pantone_reference\n",
             encoding="utf-8",
         )
         result = audit.run_audit()
@@ -46,8 +45,7 @@ def test_banned_class_def_detected(tmp_path):
     bad_file = audit.ROOT / "src" / "compile_pdf" / "_temp_audit_test_class.py"
     try:
         bad_file.write_text(
-            "class Box:\n"
-            "    pass\n",
+            "class Box:\n    pass\n",
             encoding="utf-8",
         )
         result = audit.run_audit()
