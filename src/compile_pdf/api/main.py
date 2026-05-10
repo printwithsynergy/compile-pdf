@@ -220,6 +220,14 @@ def _maybe_mount_routers() -> None:
             app.include_router(trap_router, prefix="/v1/trap", tags=["trap"])
         except ImportError:
             logger.debug("trap_router_not_yet_available")
+    if active == "all":
+        try:
+            from compile_pdf.cjd.api import cjd_router, lineage_router
+
+            app.include_router(cjd_router, prefix="/v1/cjd", tags=["cjd"])
+            app.include_router(lineage_router, prefix="/v1/lineage", tags=["lineage"])
+        except ImportError:
+            logger.debug("cjd_router_not_yet_available")
 
 
 _maybe_mount_routers()
