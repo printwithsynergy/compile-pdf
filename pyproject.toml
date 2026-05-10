@@ -114,7 +114,7 @@ ignore_missing_imports = true
 # the operational backends (S3 lineage, queue_depth) compiling under
 # strict mypy.
 [[tool.mypy.overrides]]
-module = ["boto3", "boto3.*", "celery", "celery.*"]
+module = ["boto3", "boto3.*", "celery", "celery.*", "defusedxml", "defusedxml.*"]
 ignore_missing_imports = true
 
 # Producer routers mount lazily; their api modules don't exist yet

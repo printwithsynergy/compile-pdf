@@ -11,6 +11,7 @@ import click
 
 from compile_pdf.cjd.orchestrator import CjdOrderError, execute
 from compile_pdf.cjd.schema import CjdJob, cjd_job_json_schema
+from compile_pdf.cjd.xml import CjdXmlError, parse_cjd_xml, render_cjd_xml
 from compile_pdf.lineage.store import (
     LineageNotFoundError,
     default_store,
@@ -46,6 +47,12 @@ def register(group: click.Group) -> None:
         default=None,
         help="Write the trap-diff artifact to this path (no-op if no trap step).",
     )
+    @click.option(
+        "--xml/--json",
+        "use_xml",
+        default=False,
+        help="Read the job document as XML (default: JSON).",
+    )
     @click.argument(
         "output_path",
         type=click.Path(dir_okay=False, path_type=Path),
@@ -54,16 +61,31 @@ def register(group: click.Group) -> None:
         job_path: Path,
         input_path: Path | None,
         trap_diff_path: Path | None,
+        use_xml: bool,
         output_path: Path,
     ) -> None:
-        job_dict = json.loads(job_path.read_text(encoding="utf-8"))
-        if input_path is not None:
-            job_dict["input_pdf_b64"] = base64.b64encode(input_path.read_bytes()).decode("ascii")
-        try:
-            job = CjdJob.model_validate(job_dict)
-        except Exception as exc:
-            click.echo(f"job validation failed: {exc}", err=True)
-            sys.exit(3)
+        if use_xml:
+            try:
+                job = parse_cjd_xml(job_path.read_bytes())
+            except CjdXmlError as exc:
+                click.echo(f"XML job rejected: {exc}", err=True)
+                sys.exit(3)
+            if input_path is not None:
+                # Re-serialize with the override and re-parse via JSON path.
+                payload = job.model_dump(mode="json")
+                payload["input_pdf_b64"] = base64.b64encode(input_path.read_bytes()).decode("ascii")
+                job = CjdJob.model_validate(payload)
+        else:
+            job_dict = json.loads(job_path.read_text(encoding="utf-8"))
+            if input_path is not None:
+                job_dict["input_pdf_b64"] = base64.b64encode(input_path.read_bytes()).decode(
+                    "ascii"
+                )
+            try:
+                job = CjdJob.model_validate(job_dict)
+            except Exception as exc:
+                click.echo(f"job validation failed: {exc}", err=True)
+                sys.exit(3)
 
         try:
             result = execute(job)
@@ -101,6 +123,24 @@ def register(group: click.Group) -> None:
     @group.command("cjd-schema", hidden=True, help="Dump the CJD-job JSON Schema.")
     def cjd_schema_cmd() -> None:
         click.echo(json.dumps(cjd_job_json_schema(), indent=2))
+
+    @group.command(
+        "cjd-xml-render",
+        hidden=True,
+        help="Convert a JSON CJD job to XML and print the result.",
+    )
+    @click.argument(
+        "job_path",
+        type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    )
+    def cjd_xml_render_cmd(job_path: Path) -> None:
+        job_dict = json.loads(job_path.read_text(encoding="utf-8"))
+        try:
+            job = CjdJob.model_validate(job_dict)
+        except Exception as exc:
+            click.echo(f"job validation failed: {exc}", err=True)
+            sys.exit(3)
+        click.echo(render_cjd_xml(job).decode("utf-8"))
 
     @group.command("lineage", help="Print the lineage chain for a previously-run CJD job.")
     @click.argument("lineage_id", type=str)
