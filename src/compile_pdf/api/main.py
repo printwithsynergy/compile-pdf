@@ -25,12 +25,14 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import structlog
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel, Field
 from starlette.responses import Response
 
+from compile_pdf.api.auth import authenticate
 from compile_pdf.api.middleware import INSTANCE_ID, RequestIdMiddleware
+from compile_pdf.queue_status import resolve_queue_depth
 from compile_pdf.version import (
     CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
     COMPILE_DOCUMENT_SCHEMA_VERSION,
@@ -144,7 +146,7 @@ async def healthz() -> HealthResponse:
         producer=_resolve_active_producer(),
         instance_id=INSTANCE_ID,
         cache_backend=os.environ.get("COMPILE_CACHE_BACKEND", "memory"),
-        queue_depth=0,  # Wired to Celery in Phase 1.5; no-op until then.
+        queue_depth=resolve_queue_depth(),
         ghostscript=False,  # Per spec §1.11b — only trap may flip via [trap-gs] extra.
         codex_pdf_version=_resolve_codex_pdf_version(),
         codex_section_versions=compiled_versions,
@@ -187,45 +189,77 @@ async def metrics_endpoint() -> Response:
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
-# Producer routers mount in Phase 1.x as the engines land. Each producer's
+# Producer routers mount lazily as the engines land. Each producer's
 # router lives under ``compile_pdf.{producer}.api`` and exposes
-# ``router: APIRouter`` with prefix /v1/{producer}.
+# ``router: APIRouter`` with prefix /v1/{producer}. Auth runs as a
+# router-level dependency so producer endpoints don't need to declare
+# ``Depends(authenticate)`` individually; ``/healthz`` + ``/v1/healthz``
+# + ``/v1/contract`` + ``/v1/version`` + ``/metrics`` stay open since
+# they're declared on the app, not the producer routers.
+_AUTH_DEPS = [Depends(authenticate)]
+
+
 def _maybe_mount_routers() -> None:
     active = _resolve_active_producer()
     if active in {"rewrite", "all"}:
         try:
             from compile_pdf.rewrite.api import router as rewrite_router
 
-            app.include_router(rewrite_router, prefix="/v1/rewrite", tags=["rewrite"])
+            app.include_router(
+                rewrite_router,
+                prefix="/v1/rewrite",
+                tags=["rewrite"],
+                dependencies=_AUTH_DEPS,
+            )
         except ImportError:
             logger.debug("rewrite_router_not_yet_available")
     if active in {"marks", "all"}:
         try:
             from compile_pdf.marks.api import router as marks_router
 
-            app.include_router(marks_router, prefix="/v1/marks", tags=["marks"])
+            app.include_router(
+                marks_router,
+                prefix="/v1/marks",
+                tags=["marks"],
+                dependencies=_AUTH_DEPS,
+            )
         except ImportError:
             logger.debug("marks_router_not_yet_available")
     if active in {"impose", "all"}:
         try:
             from compile_pdf.impose.api import router as impose_router
 
-            app.include_router(impose_router, prefix="/v1/impose", tags=["impose"])
+            app.include_router(
+                impose_router,
+                prefix="/v1/impose",
+                tags=["impose"],
+                dependencies=_AUTH_DEPS,
+            )
         except ImportError:
             logger.debug("impose_router_not_yet_available")
     if active in {"trap", "all"}:
         try:
             from compile_pdf.trap.api import router as trap_router
 
-            app.include_router(trap_router, prefix="/v1/trap", tags=["trap"])
+            app.include_router(
+                trap_router,
+                prefix="/v1/trap",
+                tags=["trap"],
+                dependencies=_AUTH_DEPS,
+            )
         except ImportError:
             logger.debug("trap_router_not_yet_available")
     if active == "all":
         try:
             from compile_pdf.cjd.api import cjd_router, lineage_router
 
-            app.include_router(cjd_router, prefix="/v1/cjd", tags=["cjd"])
-            app.include_router(lineage_router, prefix="/v1/lineage", tags=["lineage"])
+            app.include_router(cjd_router, prefix="/v1/cjd", tags=["cjd"], dependencies=_AUTH_DEPS)
+            app.include_router(
+                lineage_router,
+                prefix="/v1/lineage",
+                tags=["lineage"],
+                dependencies=_AUTH_DEPS,
+            )
         except ImportError:
             logger.debug("cjd_router_not_yet_available")
 

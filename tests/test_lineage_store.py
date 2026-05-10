@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from compile_pdf.lineage.store import (
+    LineageBackendError,
     LineageNotFoundError,
     LineageStep,
     MemoryLineageStore,
@@ -58,27 +59,49 @@ def test_list_ids_respects_limit() -> None:
     assert len(store.list_ids(limit=3)) == 3
 
 
-def test_select_store_resolves_known_backends() -> None:
+def test_select_store_memory(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("COMPILE_LINEAGE_BACKEND", raising=False)
+    assert isinstance(select_store(), MemoryLineageStore)
     assert isinstance(select_store("memory"), MemoryLineageStore)
-    assert isinstance(select_store("s3"), S3LineageStore)
-    assert isinstance(select_store("redis"), RedisLineageStore)
+
+
+def test_select_store_s3_requires_bucket(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("COMPILE_LINEAGE_S3_BUCKET", raising=False)
+    with pytest.raises(LineageBackendError, match="bucket"):
+        select_store("s3")
+
+
+def test_select_store_s3_with_bucket_returns_instance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("COMPILE_LINEAGE_S3_BUCKET", "compile-lineage")
+    monkeypatch.setenv("COMPILE_LINEAGE_S3_PREFIX", "lineage")
+    store = select_store("s3")
+    assert isinstance(store, S3LineageStore)
+
+
+def test_select_store_redis_requires_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("COMPILE_LINEAGE_REDIS_URL", raising=False)
+    with pytest.raises(LineageBackendError, match="URL"):
+        select_store("redis")
+
+
+def test_select_store_redis_with_url_returns_instance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("COMPILE_LINEAGE_REDIS_URL", "redis://localhost:6379/0")
+    store = select_store("redis")
+    assert isinstance(store, RedisLineageStore)
 
 
 def test_select_store_rejects_unknown_backend() -> None:
-    with pytest.raises(ValueError, match="unknown lineage backend"):
+    with pytest.raises(LineageBackendError, match="unknown lineage backend"):
         select_store("dynamodb")
 
 
-def test_s3_backend_is_unimplemented_in_v1() -> None:
-    store = S3LineageStore()
-    with pytest.raises(NotImplementedError, match="S3"):
-        store.put(_step("job-1", 0))
-
-
-def test_redis_backend_is_unimplemented_in_v1() -> None:
-    store = RedisLineageStore()
-    with pytest.raises(NotImplementedError, match="Redis"):
-        store.get("job-1")
+def test_select_store_reads_env_when_arg_omitted(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("COMPILE_LINEAGE_BACKEND", "memory")
+    assert isinstance(select_store(), MemoryLineageStore)
 
 
 def test_serialize_chain_emits_step_records() -> None:
