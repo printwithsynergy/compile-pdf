@@ -150,3 +150,42 @@ def printer_pdf() -> bytes:
 @pytest.fixture
 def two_page_printer_pdf() -> bytes:
     return build_pdf(pages=2, printer_pages=True, title="Two-up Printer")
+
+
+def _content_page(pdf: pikepdf.Pdf, marker: str) -> pikepdf.Page:
+    """Page with a unique stroke pattern in its content stream so per-cell
+    extract checks can distinguish source pages."""
+    return pikepdf.Page(
+        pdf.make_indirect(
+            pikepdf.Dictionary(
+                Type=pikepdf.Name.Page,
+                MediaBox=pikepdf.Array([0, 0, 612, 792]),
+                Resources=pikepdf.Dictionary(),
+                Contents=pdf.make_stream(
+                    (f"q 100 100 m 200 200 l S Q  % {marker}").encode("ascii")
+                ),
+            )
+        )
+    )
+
+
+def build_content_pdf(*, pages: int) -> bytes:
+    """Multi-page PDF where every page has a unique content stream marker.
+    Used by impose tests for per-cell extract verification."""
+    pdf = pikepdf.new()
+    for i in range(pages):
+        pdf.pages.append(_content_page(pdf, f"page-{i}"))
+    buf = io.BytesIO()
+    pdf.save(buf, deterministic_id=True, linearize=False, qdf=False)
+    pdf.close()
+    return buf.getvalue()
+
+
+@pytest.fixture
+def four_page_content_pdf() -> bytes:
+    return build_content_pdf(pages=4)
+
+
+@pytest.fixture
+def two_page_content_pdf() -> bytes:
+    return build_content_pdf(pages=2)
