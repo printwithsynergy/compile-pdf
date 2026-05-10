@@ -464,6 +464,7 @@ def render_external(mark: ExternalMark, geom: PageGeometry) -> list[RenderedMark
 
 # --- Dispatch -----------------------------------------------------------
 
+
 def render(mark: Mark, geom: PageGeometry) -> list[RenderedMark]:
     """Top-level dispatch — render any mark against a page geometry."""
     if isinstance(mark, RegisterMark):
