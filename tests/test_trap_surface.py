@@ -20,6 +20,7 @@ def test_trap_module_reexports_color_and_geom() -> None:
 def test_trap_symbols_match_canonical_imports() -> None:
     from codex_pdf import color as codex_color
     from codex_pdf import geom as codex_geom
+
     from compile_pdf import trap
 
     assert trap.CodexSpotIntent is codex_color.CodexSpotIntent

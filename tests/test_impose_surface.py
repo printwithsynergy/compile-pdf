@@ -13,6 +13,7 @@ def test_impose_module_reexports_tile_grid_family() -> None:
 
 def test_impose_symbols_match_canonical_imports() -> None:
     from codex_pdf import geom as codex_geom
+
     from compile_pdf import impose
 
     assert impose.TileGrid is codex_geom.TileGrid

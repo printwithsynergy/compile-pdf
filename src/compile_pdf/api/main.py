@@ -32,7 +32,6 @@ from starlette.responses import Response
 
 from compile_pdf.api.middleware import INSTANCE_ID, RequestIdMiddleware
 from compile_pdf.version import (
-    CJD_SCHEMA_VERSION,
     CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
     COMPILE_DOCUMENT_SCHEMA_VERSION,
     PRODUCER_SCHEMA_VERSIONS,
@@ -76,7 +75,7 @@ def _resolve_codex_pdf_version() -> str:
         from codex_pdf import __version__ as codex_version
     except ImportError:
         return "unknown"
-    return codex_version
+    return str(codex_version)
 
 
 def _resolve_codex_section_versions() -> dict[str, str]:
@@ -196,24 +195,28 @@ def _maybe_mount_routers() -> None:
     if active in {"rewrite", "all"}:
         try:
             from compile_pdf.rewrite.api import router as rewrite_router
+
             app.include_router(rewrite_router, prefix="/v1/rewrite", tags=["rewrite"])
         except ImportError:
             logger.debug("rewrite_router_not_yet_available")
     if active in {"marks", "all"}:
         try:
             from compile_pdf.marks.api import router as marks_router
+
             app.include_router(marks_router, prefix="/v1/marks", tags=["marks"])
         except ImportError:
             logger.debug("marks_router_not_yet_available")
     if active in {"impose", "all"}:
         try:
             from compile_pdf.impose.api import router as impose_router
+
             app.include_router(impose_router, prefix="/v1/impose", tags=["impose"])
         except ImportError:
             logger.debug("impose_router_not_yet_available")
     if active in {"trap", "all"}:
         try:
             from compile_pdf.trap.api import router as trap_router
+
             app.include_router(trap_router, prefix="/v1/trap", tags=["trap"])
         except ImportError:
             logger.debug("trap_router_not_yet_available")

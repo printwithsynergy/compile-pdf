@@ -61,10 +61,10 @@ def version_cmd() -> None:
 def contract_cmd() -> None:
     """Dump the full Compile contract (mirrors GET /v1/contract)."""
     try:
-        from compile_pdf.api.main import contract_endpoint
-
         # FastAPI handlers are async; run synchronously for CLI use.
         import asyncio
+
+        from compile_pdf.api.main import contract_endpoint
 
         result = asyncio.run(contract_endpoint())
         click.echo(json.dumps(result.model_dump(), indent=2))
@@ -77,9 +77,9 @@ def contract_cmd() -> None:
 def health_cmd() -> None:
     """Mirror GET /healthz against the configured API base or local in-process."""
     try:
-        from compile_pdf.api.main import healthz
-
         import asyncio
+
+        from compile_pdf.api.main import healthz
 
         result = asyncio.run(healthz())
         click.echo(json.dumps(result.model_dump(), indent=2))
@@ -103,7 +103,7 @@ def schema_cmd(name: str) -> None:
 # Per-producer subcommands live in compile_pdf.{producer}.cli; they register
 # themselves onto this group when imported. Phase 1.x lands rewrite first.
 def _register_producer_subcommands() -> None:
-    for module_name, sub_name in (
+    for module_name, _sub_name in (
         ("compile_pdf.rewrite.cli", "rewrite"),
         ("compile_pdf.marks.cli", "marks"),
         ("compile_pdf.impose.cli", "impose"),

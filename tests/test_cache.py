@@ -41,47 +41,29 @@ def test_canonicalize_distinguishes_real_differences():
     assert hash_canonical_plan(plan_a) != hash_canonical_plan(plan_b)
 
 
+_CACHE_KEY_BASE = {
+    "producer": "rewrite",
+    "input_sha256": "a" * 64,
+    "canonical_plan_sha256": "b" * 64,
+    "codex_pdf_package_version": "1.4.2",
+    "color_schema_version": "1.0.0",
+    "geom_schema_version": "1.0.0",
+    "codex_document_schema_version": "1.0.0",
+    "compile_version": "0.1.0",
+}
+
+
 def test_compute_cache_key_reproducible():
-    args = dict(
-        producer="rewrite",
-        input_sha256="a" * 64,
-        canonical_plan_sha256="b" * 64,
-        codex_pdf_package_version="1.4.2",
-        color_schema_version="1.0.0",
-        geom_schema_version="1.0.0",
-        codex_document_schema_version="1.0.0",
-        compile_version="0.1.0",
-    )
-    assert compute_cache_key(**args) == compute_cache_key(**args)
+    assert compute_cache_key(**_CACHE_KEY_BASE) == compute_cache_key(**_CACHE_KEY_BASE)
 
 
 def test_compute_cache_key_changes_with_section_version():
-    base = dict(
-        producer="rewrite",
-        input_sha256="a" * 64,
-        canonical_plan_sha256="b" * 64,
-        codex_pdf_package_version="1.4.2",
-        color_schema_version="1.0.0",
-        geom_schema_version="1.0.0",
-        codex_document_schema_version="1.0.0",
-        compile_version="0.1.0",
-    )
-    bumped = {**base, "color_schema_version": "1.1.0"}
-    assert compute_cache_key(**base) != compute_cache_key(**bumped), (
+    bumped = {**_CACHE_KEY_BASE, "color_schema_version": "1.1.0"}
+    assert compute_cache_key(**_CACHE_KEY_BASE) != compute_cache_key(**bumped), (
         "section bump must invalidate cache key (§1.6a)"
     )
 
 
 def test_compute_cache_key_changes_with_compile_version():
-    base = dict(
-        producer="rewrite",
-        input_sha256="a" * 64,
-        canonical_plan_sha256="b" * 64,
-        codex_pdf_package_version="1.4.2",
-        color_schema_version="1.0.0",
-        geom_schema_version="1.0.0",
-        codex_document_schema_version="1.0.0",
-        compile_version="0.1.0",
-    )
-    bumped = {**base, "compile_version": "0.2.0"}
-    assert compute_cache_key(**base) != compute_cache_key(**bumped)
+    bumped = {**_CACHE_KEY_BASE, "compile_version": "0.2.0"}
+    assert compute_cache_key(**_CACHE_KEY_BASE) != compute_cache_key(**bumped)

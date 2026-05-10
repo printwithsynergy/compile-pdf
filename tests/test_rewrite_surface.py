@@ -16,6 +16,7 @@ def test_rewrite_module_reexports_codex_document() -> None:
 
 def test_rewrite_codex_document_matches_canonical_import() -> None:
     from codex_pdf import CodexDocument as CanonicalCodexDocument
+
     from compile_pdf.rewrite import CodexDocument
 
     assert CodexDocument is CanonicalCodexDocument

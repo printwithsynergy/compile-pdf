@@ -13,6 +13,7 @@ def test_marks_module_reexports_geom_primitives() -> None:
 
 def test_marks_geom_symbols_match_canonical_imports() -> None:
     from codex_pdf import geom as codex_geom
+
     from compile_pdf import marks
 
     assert marks.Box is codex_geom.Box
