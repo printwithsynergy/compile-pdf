@@ -116,6 +116,7 @@ module = [
     "compile_pdf.marks.api",
     "compile_pdf.impose.api",
     "compile_pdf.trap.api",
+    "compile_pdf.cjd.api",
 ]
 ignore_missing_imports = true
 
