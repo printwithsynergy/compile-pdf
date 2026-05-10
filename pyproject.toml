@@ -3,13 +3,13 @@ name = "compile-pdf"
 version = "0.1.0"
 description = "CompilePDF — the only writer in the Print With Synergy stack. Rewrite, marks, impose, and trap producers built on top of codex-pdf."
 readme = "README.md"
-license = { text = "Apache-2.0" }
+license = { text = "AGPL-3.0-or-later" }
 authors = [{ name = "Print With Synergy", email = "iam@quincy.codes" }]
 requires-python = ">=3.12"
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: Apache Software License",
+  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.12",
   "Topic :: Multimedia :: Graphics",

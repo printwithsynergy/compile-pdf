@@ -65,4 +65,4 @@ CLI defaults to local-mode (in-process) when `COMPILE_API_BASE` is unset; otherw
 
 ## License
 
-Apache 2.0. See [LICENSE](./LICENSE).
+AGPL-3.0-or-later. See [LICENSE](./LICENSE).
