@@ -47,6 +47,11 @@ dev = [
   "mypy>=1.9",
   "pre-commit>=3.6",
   "types-redis",
+  # Required for the trap non-rect-polygon path
+  # (compile_pdf.trap._geom_fallback). The temporary workaround module
+  # imports pyclipr directly; see scripts/consume_surface_audit.py's
+  # EXEMPT_FILES entry.
+  "pyclipr>=0.1.6",
 ]
 
 [project.scripts]
@@ -77,6 +82,7 @@ dev-dependencies = [
   "mypy>=1.9",
   "pre-commit>=3.6",
   "types-redis",
+  "pyclipr>=0.1.6",
 ]
 
 [tool.ruff]
@@ -114,7 +120,12 @@ ignore_missing_imports = true
 # the operational backends (S3 lineage, queue_depth) compiling under
 # strict mypy.
 [[tool.mypy.overrides]]
-module = ["boto3", "boto3.*", "celery", "celery.*", "defusedxml", "defusedxml.*"]
+module = [
+  "boto3", "boto3.*",
+  "celery", "celery.*",
+  "defusedxml", "defusedxml.*",
+  "pyclipr", "pyclipr.*",
+]
 ignore_missing_imports = true
 
 # Producer routers mount lazily; their api modules don't exist yet

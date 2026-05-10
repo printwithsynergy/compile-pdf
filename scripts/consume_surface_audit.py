@@ -97,6 +97,20 @@ EXEMPT_PATHS: tuple[str, ...] = (
 - ``.venv/``/``build/``/``dist/`` are vendored / build artifacts.
 """
 
+EXEMPT_FILES: dict[str, frozenset[str]] = {
+    # Carve-out: codex_pdf 1.7.0's polygon_offset calls
+    # ``pyclipr.ClipperOffset(miterLimit=...)`` but pyclipr 0.1.8's
+    # constructor takes no kwargs, so the upstream path raises a
+    # TypeError on any non-rectangular polygon. ``trap/_geom_fallback.py``
+    # vendors the corrected call so non-rect trap zones work today;
+    # remove this carve-out once codex-pdf ships a fix.
+    "src/compile_pdf/trap/_geom_fallback.py": frozenset({"pyclipr"}),
+}
+"""Per-file allowances against the banned-import list. Each entry is a
+documented exception to spec §7.5 — when the entry is removed, the
+underlying behavior must move back through ``codex_pdf``'s surface.
+"""
+
 # --- Audit data structures --------------------------------------------------
 
 
@@ -141,12 +155,20 @@ def _flatten_attribute(node: ast.AST) -> str:
     return ".".join(reversed(parts))
 
 
+def _is_carved_out(file: str, import_name: str) -> bool:
+    """Return True if ``file`` has a documented per-file allowance for
+    ``import_name`` in :data:`EXEMPT_FILES`. Path keys match the file's
+    repo-relative POSIX form (``src/...``)."""
+    allowed = EXEMPT_FILES.get(file)
+    return allowed is not None and import_name in allowed
+
+
 def _check_import(node: ast.Import | ast.ImportFrom, file: str) -> Iterable[Violation]:
     if isinstance(node, ast.ImportFrom):
         if not node.module:
             return
         full = node.module
-        if full in BANNED_IMPORTS:
+        if full in BANNED_IMPORTS and not _is_carved_out(file, full):
             yield Violation(
                 file=file,
                 line=node.lineno,
@@ -157,7 +179,7 @@ def _check_import(node: ast.Import | ast.ImportFrom, file: str) -> Iterable[Viol
         # Catch sub-imports like `from codex_pdf.color.data import pantone_reference`.
         for alias in node.names:
             joined = f"{full}.{alias.name}" if alias.name else full
-            if joined in BANNED_IMPORTS:
+            if joined in BANNED_IMPORTS and not _is_carved_out(file, joined):
                 yield Violation(
                     file=file,
                     line=node.lineno,
@@ -167,7 +189,7 @@ def _check_import(node: ast.Import | ast.ImportFrom, file: str) -> Iterable[Viol
     else:
         # bare `import x.y.z`
         for alias in node.names:
-            if alias.name in BANNED_IMPORTS:
+            if alias.name in BANNED_IMPORTS and not _is_carved_out(file, alias.name):
                 yield Violation(
                     file=file,
                     line=node.lineno,

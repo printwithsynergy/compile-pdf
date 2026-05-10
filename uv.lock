@@ -338,6 +338,7 @@ dependencies = [
 dev = [
     { name = "mypy" },
     { name = "pre-commit" },
+    { name = "pyclipr" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -352,6 +353,7 @@ geom = [
 dev = [
     { name = "mypy" },
     { name = "pre-commit" },
+    { name = "pyclipr" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -373,6 +375,7 @@ requires-dist = [
     { name = "pillow", specifier = ">=10.2" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.6" },
     { name = "prometheus-client", specifier = ">=0.20" },
+    { name = "pyclipr", marker = "extra == 'dev'", specifier = ">=0.1.6" },
     { name = "pyclipr", marker = "extra == 'geom'", specifier = ">=0.1.6" },
     { name = "pydantic", specifier = ">=2.6" },
     { name = "pydantic-settings", specifier = ">=2.2" },
@@ -392,6 +395,7 @@ provides-extras = ["geom", "trap-gs", "trap-external", "dev"]
 dev = [
     { name = "mypy", specifier = ">=1.9" },
     { name = "pre-commit", specifier = ">=3.6" },
+    { name = "pyclipr", specifier = ">=0.1.6" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-asyncio", specifier = ">=0.23" },
     { name = "pytest-cov", specifier = ">=4.1" },
