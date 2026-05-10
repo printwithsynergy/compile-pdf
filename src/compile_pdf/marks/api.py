@@ -1,17 +1,27 @@
 """FastAPI router for the marks producer.
 
-Mounts under ``/v1/marks`` from :mod:`compile_pdf.api.main`. Single
-endpoint today: ``POST /v1/marks/apply``.
+Mounts under ``/v1/marks`` from :mod:`compile_pdf.api.main`. Two
+endpoints:
+
+* ``POST /v1/marks/apply`` — inline JSON, no external-file marks
+* ``POST /v1/marks/apply-multipart`` — multipart upload, supports
+  ``{"type": "external", ...}`` marks. The PDF is uploaded as one
+  file part, the JSON template as another, and each external file
+  referenced by the template is uploaded as a named part whose name
+  matches the template's ``file`` field.
 """
 
 from __future__ import annotations
 
 import base64
 import hashlib
+import json
+import tempfile
+from pathlib import Path
 
 import structlog
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from pydantic import BaseModel, Field, ValidationError
 
 from compile_pdf.cache import compute_cache_key, hash_canonical_plan
 from compile_pdf.marks.engine import MarksTemplateError, apply_template
@@ -139,6 +149,115 @@ async def marks_apply(payload: MarksApplyRequest) -> MarksApplyResponse:
         output_sha256=result.pdf_sha256[:16],
         marks_applied=result.marks_applied,
     )
+
+    return MarksApplyResponse(
+        output_pdf_b64=base64.b64encode(result.output_bytes).decode("ascii"),
+        pdf_sha256=result.pdf_sha256,
+        input_sha256=input_sha256,
+        template_sha256=template_sha256,
+        cache_key=cache_key,
+        cache_hit=False,
+        marks_applied=result.marks_applied,
+    )
+
+
+@router.post(
+    "/apply-multipart",
+    response_model=MarksApplyResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def marks_apply_multipart(
+    input_pdf: UploadFile = File(..., description="The input PDF."),  # noqa: B008
+    template: str = Form(..., description="JSON marks-template document."),  # noqa: B008
+    externals: list[UploadFile] = File(  # noqa: B008
+        default=[],
+        description=(
+            "External-file marks. Each file's name must match the "
+            "``file`` field of an external mark in the template."
+        ),
+    ),
+) -> MarksApplyResponse:
+    """Stamp a marks template that may include ``external`` marks.
+
+    External files arrive as separate multipart parts; the engine
+    resolves each ``ExternalMark.file`` against the uploaded part with
+    that name. Unknown external references (no matching part) → 422.
+    """
+    try:
+        template_dict = json.loads(template)
+        parsed = MarksTemplate.model_validate(template_dict)
+    except (json.JSONDecodeError, ValidationError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"template_invalid: {exc}",
+        ) from exc
+
+    input_bytes = await input_pdf.read()
+    if not input_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="input is empty")
+
+    expected_files = {m.file for m in parsed.marks if m.type == "external"}
+    provided_files = {(u.filename or "") for u in externals if u.filename}
+    missing = expected_files - provided_files
+    if missing:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"external_files_missing: {sorted(missing)}",
+        )
+
+    input_sha256 = hashlib.sha256(input_bytes).hexdigest()
+    template_sha256 = hash_canonical_plan(parsed.model_dump(mode="json"))
+
+    try:
+        from codex_pdf.color import COLOR_SCHEMA_VERSION
+        from codex_pdf.geom import GEOM_SCHEMA_VERSION
+    except ImportError as exc:  # pragma: no cover — codex-pdf is a hard dep
+        raise HTTPException(
+            status_code=500, detail=f"codex-pdf surface unavailable: {exc}"
+        ) from exc
+
+    cache_key = compute_cache_key(
+        producer="marks",
+        input_sha256=input_sha256,
+        canonical_plan_sha256=template_sha256,
+        codex_pdf_package_version=_resolve_codex_pdf_version(),
+        color_schema_version=COLOR_SCHEMA_VERSION,
+        geom_schema_version=GEOM_SCHEMA_VERSION,
+        codex_document_schema_version=CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
+    )
+
+    logger.info(
+        "marks.apply_multipart.start",
+        marks=len(parsed.marks),
+        externals=len(externals),
+        input_sha256=input_sha256[:16],
+        template_sha256=template_sha256[:16],
+    )
+
+    with tempfile.TemporaryDirectory(prefix="compile-marks-ext-") as td:
+        external_root = Path(td)
+        for uploaded in externals:
+            if not uploaded.filename:
+                continue
+            (external_root / uploaded.filename).write_bytes(await uploaded.read())
+
+        try:
+            result = apply_template(input_bytes, parsed, external_root=external_root)
+        except MarksTemplateError as exc:
+            raise HTTPException(status_code=422, detail=f"template rejected: {exc}") from exc
+
+    verify = verify_marks(
+        input_bytes=input_bytes,
+        output_bytes=result.output_bytes,
+        template=parsed,
+        determinism_replay=False,
+    )
+    if not (verify.layer1_schema and verify.layer3_unchanged):
+        logger.error("marks.apply_multipart.verify_failed", failures=verify.failures)
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "verify failed", "failures": verify.failures},
+        )
 
     return MarksApplyResponse(
         output_pdf_b64=base64.b64encode(result.output_bytes).decode("ascii"),

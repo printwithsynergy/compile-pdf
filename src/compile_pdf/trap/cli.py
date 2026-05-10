@@ -8,6 +8,7 @@ from pathlib import Path
 
 import click
 
+from compile_pdf.lineage.store import LineageNotFoundError, default_store
 from compile_pdf.trap.engine import TrapEngineError, apply_policy
 from compile_pdf.trap.policy_schema import TrapPolicy, trap_policy_json_schema
 from compile_pdf.trap.verify import verify_trap
@@ -97,13 +98,40 @@ def register(group: click.Group) -> None:
 
     @group.command(
         "trap-diff",
-        help="Print a previously-emitted trap-diff JSON artifact (lineage lookup is Phase 5).",
+        help=(
+            "Print a trap-diff artifact. Argument is either a path to a "
+            "JSON file or a lineage_id from a previously-run CJD job."
+        ),
     )
-    @click.argument(
-        "diff_path",
-        type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    @click.argument("source", type=str)
+    @click.option(
+        "--from",
+        "source_kind",
+        type=click.Choice(["auto", "file", "lineage"]),
+        default="auto",
+        help=(
+            "Where to read the diff from. 'auto' (default) tries the path "
+            "first then falls back to lineage; 'file'/'lineage' force one mode."
+        ),
     )
-    def trap_diff_cmd(diff_path: Path) -> None:
-        """Phase 4 ships file-based trap-diff inspection; lineage-id
-        lookup lands in Phase 5 once the lineage store is wired."""
-        click.echo(diff_path.read_text(encoding="utf-8"))
+    def trap_diff_cmd(source: str, source_kind: str) -> None:
+        """Resolve trap-diff via file or lineage lookup."""
+        as_path = Path(source)
+        if source_kind in ("file", "auto") and as_path.exists():
+            click.echo(as_path.read_text(encoding="utf-8"))
+            return
+        if source_kind == "file":
+            click.echo(f"file not found: {source}", err=True)
+            sys.exit(2)
+
+        try:
+            chain = default_store().get(source)
+        except LineageNotFoundError:
+            click.echo(f"lineage_id not found: {source}", err=True)
+            sys.exit(5)
+        for step in reversed(chain.steps):
+            if step.trap_diff is not None:
+                click.echo(json.dumps(step.trap_diff, indent=2))
+                return
+        click.echo(f"lineage {source} has no trap step", err=True)
+        sys.exit(6)
