@@ -97,6 +97,49 @@ def register(group: click.Group) -> None:
         click.echo(json.dumps(trap_policy_json_schema(), indent=2))
 
     @group.command(
+        "trap-extract",
+        help=(
+            "Walk a PDF's content streams and emit suggested trap_zones for "
+            "every spot-ink adjacency. Output is JSON ready to paste into a "
+            "trap-policy document."
+        ),
+    )
+    @click.argument(
+        "input_path",
+        type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    )
+    @click.option(
+        "--seam-width-pt",
+        type=float,
+        default=6.0,
+        help="Width of the suggested trap seam, in PDF points.",
+    )
+    @click.option(
+        "--edge-tolerance-pt",
+        type=float,
+        default=0.5,
+        help="Maximum gap between two edges that still counts as adjacent.",
+    )
+    def trap_extract_cmd(
+        input_path: Path,
+        seam_width_pt: float,
+        edge_tolerance_pt: float,
+    ) -> None:
+        from compile_pdf.trap.extract import auto_trap_zones
+
+        zones = auto_trap_zones(
+            input_path.read_bytes(),
+            edge_tolerance_pt=edge_tolerance_pt,
+            seam_width_pt=seam_width_pt,
+        )
+        click.echo(
+            json.dumps(
+                [z.model_dump(mode="json", exclude_none=True) for z in zones],
+                indent=2,
+            )
+        )
+
+    @group.command(
         "trap-diff",
         help=(
             "Print a trap-diff artifact. Argument is either a path to a "

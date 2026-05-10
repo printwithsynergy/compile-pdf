@@ -99,14 +99,14 @@ def apply(input_bytes: bytes, policy: TrapPolicy) -> TrapEngineResult:
             from_resolution = _resolve_ink(zone.from_ink)
             to_resolution = _resolve_ink(zone.to_ink)
 
-            trap_polygon = _compute_trap_polygon(zone.rect_pt, direction, width)
+            trap_polygon = _compute_trap_polygon_for_zone(zone, direction, width)
             page = pdf.pages[zone.page_index]
             _stamp_overlap(pdf, page, trap_polygon, from_resolution)
 
             operations.append(
                 TrapApplication(
                     page_index=zone.page_index,
-                    rect_pt=zone.rect_pt,
+                    rect_pt=zone.rect_pt or _polygon_bbox(zone.polygon_pt or ()),
                     from_ink=zone.from_ink,
                     to_ink=zone.to_ink,
                     direction=direction,
@@ -195,16 +195,69 @@ def _compute_trap_polygon(
     width_pt: float,
 ) -> tuple[tuple[float, float], ...]:
     """Use ``codex.polygon_offset`` to inflate (spread) or deflate
-    (choke) the boundary rectangle by ``width_pt``."""
+    (choke) the boundary rectangle by ``width_pt``.
+
+    Codex's polygon_offset routes through pyclipr when available, and
+    codex 1.7.0's pyclipr call uses a kwarg that pyclipr 0.1.8's
+    ClipperOffset() doesn't accept. The catch below routes around that
+    upstream bug via the same fallback the non-rect path uses; remove
+    the try/except once codex-pdf ships a fix.
+    """
     box = Box(*rect)
     distance = width_pt if direction == "spread" else -width_pt
-    offset = polygon_offset(Path.from_box(box), distance)
-    if not offset.rings:
+    try:
+        offset = polygon_offset(Path.from_box(box), distance)
+        rings = offset.rings
+    except TypeError:
+        from compile_pdf.trap import _geom_fallback
+
+        x0, y0, x1, y1 = rect
+        ring = _geom_fallback.polygon_offset(((x0, y0), (x1, y0), (x1, y1), (x0, y1)), distance)
+        rings = [ring] if ring else []
+    if not rings:
         raise TrapEngineError(
             f"polygon_offset collapsed rect {rect} at distance {distance:+.4f} pt; "
             "increase trap rect or reduce width_pt."
         )
-    return tuple(offset.rings[0])
+    return tuple(rings[0])
+
+
+def _compute_trap_polygon_for_zone(
+    zone: TrapZone,
+    direction: TrapDirection,
+    width_pt: float,
+) -> tuple[tuple[float, float], ...]:
+    """Dispatch zone shape to the rect fast-path or the polygon fallback.
+
+    Rectangles route through codex's polygon_offset rectangle fast-path
+    (no pyclipr required). Non-rect polygons route through
+    :mod:`compile_pdf.trap._geom_fallback` — a documented temporary
+    workaround for the upstream codex × pyclipr ABI mismatch.
+    """
+    if zone.rect_pt is not None:
+        return _compute_trap_polygon(zone.rect_pt, direction, width_pt)
+    assert zone.polygon_pt is not None  # schema invariant
+    from compile_pdf.trap import _geom_fallback
+
+    distance = width_pt if direction == "spread" else -width_pt
+    offset = _geom_fallback.polygon_offset(tuple(zone.polygon_pt), distance)
+    if not offset:
+        raise TrapEngineError(
+            f"polygon_offset collapsed polygon at distance {distance:+.4f} pt; "
+            "increase polygon size or reduce width_pt."
+        )
+    return tuple(offset)
+
+
+def _polygon_bbox(
+    polygon: tuple[tuple[float, float], ...],
+) -> tuple[float, float, float, float]:
+    """Axis-aligned bounding box of ``polygon``, for diff reporting."""
+    if not polygon:
+        return (0.0, 0.0, 0.0, 0.0)
+    xs = [p[0] for p in polygon]
+    ys = [p[1] for p in polygon]
+    return (min(xs), min(ys), max(xs), max(ys))
 
 
 def _delta_e_between(

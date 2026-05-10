@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, NonNegativeInt, PositiveFloat, RootModel
+from pydantic import BaseModel, Field, NonNegativeInt, PositiveFloat, RootModel, model_validator
 
 
 class _Strict(BaseModel):
@@ -47,19 +47,47 @@ class InkPairRule(_Strict):
 
 
 class TrapZone(_Strict):
-    """One axis-aligned rectangular trap target on a specific page.
+    """One trap target on a specific page.
 
-    The zone's ink-pair labels (``from_ink``, ``to_ink``) must match an
-    entry in ``policy.ink_pair_rules`` or fall back to the default
-    width via ``policy.default_trap_width_pt``.
+    Two shapes are supported:
+
+    * **Rectangle** — set ``rect_pt`` only. The engine uses codex's
+      polygon_offset fast-path (no pyclipr required).
+    * **Polygon** — set ``polygon_pt`` to a closed counter-clockwise
+      ring of ``(x, y)`` vertices in PDF points. The engine routes the
+      offset through ``compile_pdf.trap._geom_fallback`` because
+      codex_pdf 1.7.0's polygon_offset rejects non-rect paths on
+      pyclipr 0.1.8 — temporary upstream workaround.
+
+    Exactly one of ``rect_pt`` / ``polygon_pt`` must be set; the
+    schema's ``model_validator`` enforces that.
     """
 
     page_index: NonNegativeInt
-    rect_pt: tuple[float, float, float, float] = Field(
+    rect_pt: tuple[float, float, float, float] | None = Field(
+        default=None,
         description="(llx, lly, urx, ury) in points; must satisfy llx<urx, lly<ury.",
+    )
+    polygon_pt: tuple[tuple[float, float], ...] | None = Field(
+        default=None,
+        description=(
+            "Closed CCW ring of (x, y) vertices in PDF points. At least "
+            "three vertices required; the engine implicitly closes the "
+            "ring back to the first vertex."
+        ),
     )
     from_ink: str = Field(min_length=1)
     to_ink: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _validate_shape(self) -> TrapZone:
+        has_rect = self.rect_pt is not None
+        has_poly = self.polygon_pt is not None
+        if has_rect == has_poly:
+            raise ValueError("TrapZone requires exactly one of rect_pt or polygon_pt")
+        if self.polygon_pt is not None and len(self.polygon_pt) < 3:
+            raise ValueError("polygon_pt requires at least 3 vertices")
+        return self
 
 
 NeutralDensitySource = Literal["codex_extract", "operator"]
