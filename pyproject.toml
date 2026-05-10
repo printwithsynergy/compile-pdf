@@ -89,6 +89,8 @@ ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["N802"]
+# Fake S3 client mirrors boto3's PascalCase kwargs verbatim.
+"tests/test_lineage_s3.py" = ["N802", "N803"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -106,6 +108,13 @@ disallow_untyped_defs = false
 # fail strict on every line.
 [[tool.mypy.overrides]]
 module = ["codex_pdf", "codex_pdf.*"]
+ignore_missing_imports = true
+
+# boto3 + celery don't ship py.typed markers; trap them as Any to keep
+# the operational backends (S3 lineage, queue_depth) compiling under
+# strict mypy.
+[[tool.mypy.overrides]]
+module = ["boto3", "boto3.*", "celery", "celery.*"]
 ignore_missing_imports = true
 
 # Producer routers mount lazily; their api modules don't exist yet
