@@ -4,6 +4,37 @@ All notable changes to compile-pdf will be documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] — 2026-05-11
+
+### Added
+
+- Retention-for-training opt-in surface (`compile_pdf.retention`).
+  When a producer call carries `X-Compile-Retain-For-Training: true`
+  (or, on multipart endpoints, form field `retain_for_training=true`)
+  **and** `COMPILE_RETAIN_BUCKET` is set, Compile persists three blobs
+  per call (`input.pdf`, `output.pdf`, `result.json`) under
+  `{prefix}/{tenant}/{producer}/{YYYY-MM-DD}/{input_sha256}/` with a
+  `ttl-days` object tag. Tenant arrives via `X-Compile-Tenant`
+  (slugified, defaults to `anonymous`).
+- `POST /v1/retention/delete` — data-subject erasure endpoint that
+  bulk-deletes every object whose key contains `/{sha256}/`.
+- `LineageStep.retained_for_training` flag, threaded through the CJD
+  orchestrator and surfaced on `GET /v1/lineage/{id}`.
+- New env vars: `COMPILE_RETAIN_BUCKET`, `COMPILE_RETAIN_PREFIX`,
+  `COMPILE_RETAIN_TTL_DAYS`, `COMPILE_RETAIN_ENDPOINT_URL`,
+  `COMPILE_RETAIN_REGION`, `COMPILE_RETAIN_AWS_{ACCESS,SECRET}_KEY*`.
+- 50 new tests across consent parsing, S3 store fakes, per-producer
+  wiring, CJD orchestration, retention API, and lineage flag
+  round-trips.
+
+### Notes
+
+- Default behaviour is unchanged: with no env config the consent
+  header is parsed and logged but nothing is written. Producer
+  endpoints never fail on retention errors — backend hiccups
+  downgrade to a silent no-op so a transient S3 outage cannot
+  break a producer call.
+
 ## [0.1.0] — 2026-05-09
 
 ### Added

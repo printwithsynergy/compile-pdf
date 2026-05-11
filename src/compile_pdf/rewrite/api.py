@@ -10,10 +10,15 @@ import base64
 import hashlib
 
 import structlog
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from compile_pdf.cache import compute_cache_key, hash_canonical_plan
+from compile_pdf.retention import (
+    parse_consent,
+    persist_if_opted_in,
+    resolve_tenant,
+)
 from compile_pdf.rewrite.engine import RewritePlanError, apply_plan
 from compile_pdf.rewrite.plan_schema import RewritePlan
 from compile_pdf.rewrite.verify import verify_rewrite
@@ -60,7 +65,7 @@ class RewriteApplyResponse(BaseModel):
 
 
 @router.post("/apply", response_model=RewriteApplyResponse, status_code=status.HTTP_200_OK)
-async def rewrite_apply(payload: RewriteApplyRequest) -> RewriteApplyResponse:
+async def rewrite_apply(payload: RewriteApplyRequest, request: Request) -> RewriteApplyResponse:
     """Apply a rewrite plan to an inline base64-encoded PDF.
 
     Verification (spec §2.3 — three layers) runs server-side before the
@@ -125,13 +130,8 @@ async def rewrite_apply(payload: RewriteApplyRequest) -> RewriteApplyResponse:
             detail={"error": "verify failed", "failures": verify.failures},
         )
 
-    logger.info(
-        "rewrite.apply.ok",
-        output_sha256=result.pdf_sha256[:16],
-        ops_applied=result.ops_applied,
-    )
-
-    return RewriteApplyResponse(
+    consent = parse_consent(request)
+    response = RewriteApplyResponse(
         output_pdf_b64=base64.b64encode(result.output_bytes).decode("ascii"),
         pdf_sha256=result.pdf_sha256,
         input_sha256=input_sha256,
@@ -140,6 +140,23 @@ async def rewrite_apply(payload: RewriteApplyRequest) -> RewriteApplyResponse:
         cache_hit=False,
         ops_applied=result.ops_applied,
     )
+    retained = persist_if_opted_in(
+        consent=consent,
+        producer="rewrite",
+        tenant=resolve_tenant(request),
+        input_bytes=input_bytes,
+        output_bytes=result.output_bytes,
+        result=response.model_dump(mode="json"),
+        input_sha256=input_sha256,
+    )
+    logger.info(
+        "rewrite.apply.ok",
+        output_sha256=result.pdf_sha256[:16],
+        ops_applied=result.ops_applied,
+        consent=consent,
+        retained=retained,
+    )
+    return response
 
 
 def _resolve_codex_pdf_version() -> str:

@@ -45,6 +45,7 @@ class LineageStep:
     plan_sha256: str
     extras: dict[str, object] = field(default_factory=dict)
     trap_diff: dict[str, object] | None = None
+    retained_for_training: bool = False
 
 
 @dataclass(frozen=True)
@@ -319,6 +320,7 @@ def _serialize_step(step: LineageStep) -> dict[str, object]:
         "output_sha256": step.output_sha256,
         "cache_key": step.cache_key,
         "plan_sha256": step.plan_sha256,
+        "retained_for_training": step.retained_for_training,
     }
     if step.extras:
         payload["extras"] = dict(step.extras)
@@ -346,6 +348,7 @@ def _deserialize_step(payload: dict[str, Any], *, lineage_id: str) -> LineageSte
         plan_sha256=str(payload["plan_sha256"]),
         extras=dict(payload.get("extras") or {}),
         trap_diff=payload.get("trap_diff"),
+        retained_for_training=bool(payload.get("retained_for_training", False)),
     )
 
 

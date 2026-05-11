@@ -20,13 +20,19 @@ import tempfile
 from pathlib import Path
 
 import structlog
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel, Field, ValidationError
 
 from compile_pdf.cache import compute_cache_key, hash_canonical_plan
 from compile_pdf.marks.engine import MarksTemplateError, apply_template
 from compile_pdf.marks.template_schema import MarksTemplate
 from compile_pdf.marks.verify import verify_marks
+from compile_pdf.retention import (
+    CONSENT_FORM_FIELD,
+    parse_consent,
+    persist_if_opted_in,
+    resolve_tenant,
+)
 from compile_pdf.version import (
     CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
     MARKS_SCHEMA_VERSION,
@@ -72,7 +78,7 @@ class MarksApplyResponse(BaseModel):
 
 
 @router.post("/apply", response_model=MarksApplyResponse, status_code=status.HTTP_200_OK)
-async def marks_apply(payload: MarksApplyRequest) -> MarksApplyResponse:
+async def marks_apply(payload: MarksApplyRequest, request: Request) -> MarksApplyResponse:
     """Stamp a marks template over an inline base64-encoded PDF.
 
     Verification (spec §2.3 four layers) runs server-side before the
@@ -144,13 +150,8 @@ async def marks_apply(payload: MarksApplyRequest) -> MarksApplyResponse:
             detail={"error": "verify failed", "failures": verify.failures},
         )
 
-    logger.info(
-        "marks.apply.ok",
-        output_sha256=result.pdf_sha256[:16],
-        marks_applied=result.marks_applied,
-    )
-
-    return MarksApplyResponse(
+    consent = parse_consent(request)
+    response = MarksApplyResponse(
         output_pdf_b64=base64.b64encode(result.output_bytes).decode("ascii"),
         pdf_sha256=result.pdf_sha256,
         input_sha256=input_sha256,
@@ -159,6 +160,23 @@ async def marks_apply(payload: MarksApplyRequest) -> MarksApplyResponse:
         cache_hit=False,
         marks_applied=result.marks_applied,
     )
+    retained = persist_if_opted_in(
+        consent=consent,
+        producer="marks",
+        tenant=resolve_tenant(request),
+        input_bytes=input_bytes,
+        output_bytes=result.output_bytes,
+        result=response.model_dump(mode="json"),
+        input_sha256=input_sha256,
+    )
+    logger.info(
+        "marks.apply.ok",
+        output_sha256=result.pdf_sha256[:16],
+        marks_applied=result.marks_applied,
+        consent=consent,
+        retained=retained,
+    )
+    return response
 
 
 @router.post(
@@ -167,6 +185,7 @@ async def marks_apply(payload: MarksApplyRequest) -> MarksApplyResponse:
     status_code=status.HTTP_200_OK,
 )
 async def marks_apply_multipart(
+    request: Request,
     input_pdf: UploadFile = File(..., description="The input PDF."),  # noqa: B008
     template: str = Form(..., description="JSON marks-template document."),  # noqa: B008
     externals: list[UploadFile] = File(  # noqa: B008
@@ -175,6 +194,11 @@ async def marks_apply_multipart(
             "External-file marks. Each file's name must match the "
             "``file`` field of an external mark in the template."
         ),
+    ),
+    retain_for_training: str | None = Form(  # noqa: B008
+        default=None,
+        alias=CONSENT_FORM_FIELD,
+        description="Opt-in flag — 'true'/'1'/'yes' persists the call for training.",
     ),
 ) -> MarksApplyResponse:
     """Stamp a marks template that may include ``external`` marks.
@@ -259,7 +283,8 @@ async def marks_apply_multipart(
             detail={"error": "verify failed", "failures": verify.failures},
         )
 
-    return MarksApplyResponse(
+    consent = parse_consent(request, form_value=retain_for_training)
+    response = MarksApplyResponse(
         output_pdf_b64=base64.b64encode(result.output_bytes).decode("ascii"),
         pdf_sha256=result.pdf_sha256,
         input_sha256=input_sha256,
@@ -268,6 +293,23 @@ async def marks_apply_multipart(
         cache_hit=False,
         marks_applied=result.marks_applied,
     )
+    retained = persist_if_opted_in(
+        consent=consent,
+        producer="marks",
+        tenant=resolve_tenant(request),
+        input_bytes=input_bytes,
+        output_bytes=result.output_bytes,
+        result=response.model_dump(mode="json"),
+        input_sha256=input_sha256,
+    )
+    logger.info(
+        "marks.apply_multipart.ok",
+        output_sha256=result.pdf_sha256[:16],
+        marks_applied=result.marks_applied,
+        consent=consent,
+        retained=retained,
+    )
+    return response
 
 
 def _resolve_codex_pdf_version() -> str:

@@ -10,10 +10,15 @@ import base64
 import hashlib
 
 import structlog
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from compile_pdf.cache import compute_cache_key, hash_canonical_plan
+from compile_pdf.retention import (
+    parse_consent,
+    persist_if_opted_in,
+    resolve_tenant,
+)
 from compile_pdf.trap.engine import TrapEngineError, apply_policy
 from compile_pdf.trap.policy_schema import TrapPolicy
 from compile_pdf.trap.verify import verify_trap
@@ -55,7 +60,7 @@ class TrapApplyResponse(BaseModel):
 
 
 @router.post("/apply", response_model=TrapApplyResponse, status_code=status.HTTP_200_OK)
-async def trap_apply(payload: TrapApplyRequest) -> TrapApplyResponse:
+async def trap_apply(payload: TrapApplyRequest, request: Request) -> TrapApplyResponse:
     """Apply a trap policy to an inline base64-encoded PDF."""
     try:
         input_bytes = base64.b64decode(payload.input_pdf_b64, validate=True)
@@ -116,14 +121,8 @@ async def trap_apply(payload: TrapApplyRequest) -> TrapApplyResponse:
             detail={"error": "verify failed", "failures": verify.failures},
         )
 
-    logger.info(
-        "trap.apply.ok",
-        engine=result.engine,
-        output_sha256=result.pdf_sha256[:16],
-        operations=len(result.operations),
-    )
-
-    return TrapApplyResponse(
+    consent = parse_consent(request)
+    response = TrapApplyResponse(
         output_pdf_b64=base64.b64encode(result.output_bytes).decode("ascii"),
         pdf_sha256=result.pdf_sha256,
         input_sha256=input_sha256,
@@ -135,6 +134,24 @@ async def trap_apply(payload: TrapApplyRequest) -> TrapApplyResponse:
         operations_count=len(result.operations),
         trap_diff=result.trap_diff,
     )
+    retained = persist_if_opted_in(
+        consent=consent,
+        producer="trap",
+        tenant=resolve_tenant(request),
+        input_bytes=input_bytes,
+        output_bytes=result.output_bytes,
+        result=response.model_dump(mode="json"),
+        input_sha256=input_sha256,
+    )
+    logger.info(
+        "trap.apply.ok",
+        engine=result.engine,
+        output_sha256=result.pdf_sha256[:16],
+        operations=len(result.operations),
+        consent=consent,
+        retained=retained,
+    )
+    return response
 
 
 def _resolve_codex_pdf_version() -> str:
