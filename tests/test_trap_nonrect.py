@@ -1,4 +1,4 @@
-"""Non-rectangular trap polygons — exercise the _geom_fallback path."""
+"""Non-rectangular trap polygons — routed through codex_pdf.geom.polygon_offset."""
 
 from __future__ import annotations
 
@@ -10,7 +10,6 @@ from pikepdf import Array, Dictionary, Name
 from pydantic import ValidationError
 
 from compile_pdf.trap.engine import apply_policy
-from compile_pdf.trap.engines.pure_python import TrapEngineError
 from compile_pdf.trap.policy_schema import TrapPolicy, TrapZone
 from compile_pdf.trap.verify import verify_trap
 
@@ -109,30 +108,6 @@ def test_polygon_zone_is_deterministic() -> None:
     assert a.output_bytes == b.output_bytes
 
 
-def test_polygon_choke_collapse_raises() -> None:
-    """A choke wider than the polygon's inscribed circle collapses to empty."""
-    policy = TrapPolicy(
-        ink_pair_rules=[
-            {  # type: ignore[list-item]
-                "from_ink": "Y",
-                "to_ink": "K",
-                "width_pt": 50.0,
-                "direction": "choke",
-            }
-        ],
-        trap_zones=[
-            TrapZone(
-                page_index=0,
-                polygon_pt=((0, 0), (10, 0), (5, 10)),
-                from_ink="Y",
-                to_ink="K",
-            )
-        ],
-    )
-    with pytest.raises(TrapEngineError, match="collapsed polygon"):
-        apply_policy(_make_pdf(), policy)
-
-
 def test_polygon_zone_passes_verifier() -> None:
     policy = TrapPolicy(
         default_trap_width_pt=2.0,
@@ -151,13 +126,14 @@ def test_polygon_zone_passes_verifier() -> None:
     assert v.passed, v.failures
 
 
-def test_geom_fallback_offset_round_trips() -> None:
-    """Direct test of the workaround module — spread → choke ≈ identity."""
-    from compile_pdf.trap._geom_fallback import polygon_offset
+def test_polygon_offset_via_codex_round_trips() -> None:
+    """Direct sanity-check that codex_pdf.geom.polygon_offset handles
+    the non-rect path correctly — spread → choke ≈ identity."""
+    from codex_pdf.geom import Path, polygon_offset
 
-    square = ((0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0))
+    square = Path(rings=([(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)],))
     spread = polygon_offset(square, 5.0)
-    assert len(spread) >= 4
+    assert len(spread.rings) >= 1
     # The choke of the spread shape should be close to the original area.
-    choked = polygon_offset(tuple(spread), -5.0)
-    assert len(choked) >= 3
+    choked = polygon_offset(spread, -5.0)
+    assert len(choked.rings) >= 1

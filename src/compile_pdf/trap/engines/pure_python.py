@@ -195,31 +195,16 @@ def _compute_trap_polygon(
     width_pt: float,
 ) -> tuple[tuple[float, float], ...]:
     """Use ``codex.polygon_offset`` to inflate (spread) or deflate
-    (choke) the boundary rectangle by ``width_pt``.
-
-    Codex's polygon_offset routes through pyclipr when available, and
-    codex 1.7.0's pyclipr call uses a kwarg that pyclipr 0.1.8's
-    ClipperOffset() doesn't accept. The catch below routes around that
-    upstream bug via the same fallback the non-rect path uses; remove
-    the try/except once codex-pdf ships a fix.
-    """
+    (choke) the boundary rectangle by ``width_pt``."""
     box = Box(*rect)
     distance = width_pt if direction == "spread" else -width_pt
-    try:
-        offset = polygon_offset(Path.from_box(box), distance)
-        rings = offset.rings
-    except TypeError:
-        from compile_pdf.trap import _geom_fallback
-
-        x0, y0, x1, y1 = rect
-        ring = _geom_fallback.polygon_offset(((x0, y0), (x1, y0), (x1, y1), (x0, y1)), distance)
-        rings = [ring] if ring else []
-    if not rings:
+    offset = polygon_offset(Path.from_box(box), distance)
+    if not offset.rings:
         raise TrapEngineError(
             f"polygon_offset collapsed rect {rect} at distance {distance:+.4f} pt; "
             "increase trap rect or reduce width_pt."
         )
-    return tuple(rings[0])
+    return tuple(offset.rings[0])
 
 
 def _compute_trap_polygon_for_zone(
@@ -227,26 +212,25 @@ def _compute_trap_polygon_for_zone(
     direction: TrapDirection,
     width_pt: float,
 ) -> tuple[tuple[float, float], ...]:
-    """Dispatch zone shape to the rect fast-path or the polygon fallback.
+    """Dispatch zone shape to the rect fast-path or the polygon path.
 
-    Rectangles route through codex's polygon_offset rectangle fast-path
-    (no pyclipr required). Non-rect polygons route through
-    :mod:`compile_pdf.trap._geom_fallback` — a documented temporary
-    workaround for the upstream codex × pyclipr ABI mismatch.
+    Both shapes now route through ``codex_pdf.geom.polygon_offset``;
+    the rect path uses ``Path.from_box`` for clarity (codex's internal
+    fast-path detects axis-aligned rectangles automatically).
     """
     if zone.rect_pt is not None:
         return _compute_trap_polygon(zone.rect_pt, direction, width_pt)
     assert zone.polygon_pt is not None  # schema invariant
-    from compile_pdf.trap import _geom_fallback
 
     distance = width_pt if direction == "spread" else -width_pt
-    offset = _geom_fallback.polygon_offset(tuple(zone.polygon_pt), distance)
-    if not offset:
+    polygon_path = Path(rings=(list(zone.polygon_pt),))
+    offset = polygon_offset(polygon_path, distance)
+    if not offset.rings:
         raise TrapEngineError(
             f"polygon_offset collapsed polygon at distance {distance:+.4f} pt; "
             "increase polygon size or reduce width_pt."
         )
-    return tuple(offset)
+    return tuple(offset.rings[0])
 
 
 def _polygon_bbox(
