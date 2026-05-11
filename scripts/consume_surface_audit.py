@@ -97,19 +97,11 @@ EXEMPT_PATHS: tuple[str, ...] = (
 - ``.venv/``/``build/``/``dist/`` are vendored / build artifacts.
 """
 
-EXEMPT_FILES: dict[str, frozenset[str]] = {
-    # Carve-out: codex_pdf 1.7.0's polygon_offset calls
-    # ``pyclipr.ClipperOffset(miterLimit=...)`` but pyclipr 0.1.8's
-    # constructor takes no kwargs, so the upstream path raises a
-    # TypeError on any non-rectangular polygon. ``trap/_geom_fallback.py``
-    # vendors the corrected call so non-rect trap zones work today;
-    # remove this carve-out once codex-pdf ships a fix.
-    "src/compile_pdf/trap/_geom_fallback.py": frozenset({"pyclipr"}),
-}
-"""Per-file allowances against the banned-import list. Each entry is a
-documented exception to spec §7.5 — when the entry is removed, the
-underlying behavior must move back through ``codex_pdf``'s surface.
-"""
+EXEMPT_FILES: dict[str, frozenset[str]] = {}
+"""Per-file allowances against the banned-import list. Empty by design —
+when this dict is non-empty it documents an explicit carve-out from
+spec §7.5 that should be removed as soon as the upstream surface is
+fixed."""
 
 # --- Audit data structures --------------------------------------------------
 
