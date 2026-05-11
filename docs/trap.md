@@ -82,5 +82,13 @@ choice explicit.
 
 ## Status
 
-Skeleton. Lands in Phase 4 of
-[`COMPILE-IMPL-PLAN.md`](../COMPILE-IMPL-PLAN.md).
+Shipped. `POST /v1/trap/apply` is live; all three engine slots
+(`pure_python`, `ghostscript`, `external`) are wired, with
+`pure_python` as the default. Real PDF ink-pair adjacency
+extraction and non-rectangular trap polygons (via codex
+`polygon_offset`) shipped alongside Codex 1.7.1+.
+
+## Retention-for-training
+
+`POST /v1/trap/apply` honours `X-Compile-Retain-For-Training`. See
+[`operations/retention.md`](./operations/retention.md).

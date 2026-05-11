@@ -20,7 +20,7 @@ Four producers under one Python package, four FastAPI services in one Railway pr
 
 ## Status
 
-Pre-release scaffolding. See [`COMPILE-IMPL-PLAN.md`](./COMPILE-IMPL-PLAN.md) for the phased roadmap and [`docs/`](./docs) for operator + integrator documentation.
+`compile-pdf 0.5.1` on PyPI, built against `codex-pdf 1.8.1`. All four producers (`rewrite`, `marks`, `impose`, `trap`) are live, the CJD orchestrator + lineage store are wired, and retention-for-training is opt-in per request. See [`CHANGELOG.md`](./CHANGELOG.md) for the release log and [`docs/`](./docs) for operator + integrator documentation.
 
 ## Install
 
@@ -55,13 +55,29 @@ compile-pdf cjd apply <job.json|job.xml>
 compile-pdf lineage <id> [--chain]
 ```
 
+### Opting in to retention-for-training
+
+Every producer endpoint (and the CJD orchestrator) accepts an
+explicit opt-in signal that retains the call's inputs and outputs
+for engine training. Off by default; engaged per-request.
+
+```bash
+curl -X POST $COMPILE_BASE/v1/rewrite/apply \
+  -H "X-Compile-Retain-For-Training: true" \
+  -H "X-Compile-Tenant: acme-co" \
+  -H "Content-Type: application/json" \
+  --data-binary @request.json
+```
+
+Operators wire it up by setting `COMPILE_RETAIN_BUCKET` and friends
+(see [`docs/operations/retention.md`](./docs/operations/retention.md)). With no bucket configured the consent header is parsed and logged but nothing is written.
+
 CLI defaults to local-mode (in-process) when `COMPILE_API_BASE` is unset; otherwise POSTs to the configured central or sidecar URL.
 
 ## Docs
 
-- Design spec: [`COMPILE-DESIGN-SPEC.md`](./COMPILE-DESIGN-SPEC.md)
-- Implementation plan: [`COMPILE-IMPL-PLAN.md`](./COMPILE-IMPL-PLAN.md)
 - Operator + integrator docs: [`docs/`](./docs)
+- Per-release log: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## License
 

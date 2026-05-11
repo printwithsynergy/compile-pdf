@@ -60,7 +60,12 @@ imposed sheet must reproduce the original Nth input page
 byte-for-byte. The verifier runs this check in CI for every
 `impose --layout` test fixture.
 
+## Retention-for-training
+
+`POST /v1/impose/apply` honours `X-Compile-Retain-For-Training`. See
+[`operations/retention.md`](./operations/retention.md).
+
 ## Status
 
-Skeleton. Lands in Phase 3 of
-[`COMPILE-IMPL-PLAN.md`](../COMPILE-IMPL-PLAN.md).
+Shipped. `POST /v1/impose/apply` is live; cell-extract round-trip
+verification runs in CI on every release.

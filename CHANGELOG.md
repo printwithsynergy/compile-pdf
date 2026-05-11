@@ -92,8 +92,7 @@ versions adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Notes
 
 - This release is **scaffolding only** — no producer engine implementations
-  have landed yet. Phase 1 (rewrite engine) is the next milestone per
-  [`COMPILE-IMPL-PLAN.md`](../COMPILE-IMPL-PLAN.md) §3.
+  have landed yet. The rewrite engine is the next milestone.
 - Codex 1.5 (Phase 0) prerequisites — `polygon_offset`, neutral-density
   fields, TileGrid extensions, server-side `instance_id` + request-id
   middleware — are tracked separately and gated by spec STOP-gate 0-A.

@@ -83,7 +83,15 @@ short-circuits to the cached output.
 
 No re-implementation; the audit script enforces.
 
+## Retention-for-training
+
+`POST /v1/rewrite/apply` honours the `X-Compile-Retain-For-Training`
+header. When truthy and `COMPILE_RETAIN_BUCKET` is configured, the
+call's input/output/result triplet is persisted to S3-compatible
+storage with a TTL tag. The decision is reflected on the lineage
+record. See [`operations/retention.md`](./operations/retention.md).
+
 ## Status
 
-Skeleton. Lands in Phase 1 of
-[`COMPILE-IMPL-PLAN.md`](../COMPILE-IMPL-PLAN.md).
+Shipped. The mutation engine (`pikepdf`) + three-layer verify +
+`POST /v1/rewrite/apply` are live; determinism is enforced in CI.
