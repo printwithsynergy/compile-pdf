@@ -10,13 +10,18 @@ import base64
 import hashlib
 
 import structlog
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from compile_pdf.cache import compute_cache_key, hash_canonical_plan
 from compile_pdf.impose.engine import ImposePlanError, apply_plan
 from compile_pdf.impose.layout_schema import ImposePlan
 from compile_pdf.impose.verify import verify_impose
+from compile_pdf.retention import (
+    parse_consent,
+    persist_if_opted_in,
+    resolve_tenant,
+)
 from compile_pdf.version import (
     CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
     IMPOSE_SCHEMA_VERSION,
@@ -54,7 +59,7 @@ class ImposeApplyResponse(BaseModel):
 
 
 @router.post("/apply", response_model=ImposeApplyResponse, status_code=status.HTTP_200_OK)
-async def impose_apply(payload: ImposeApplyRequest) -> ImposeApplyResponse:
+async def impose_apply(payload: ImposeApplyRequest, request: Request) -> ImposeApplyResponse:
     """Impose an inline base64-encoded PDF onto sheets per the plan."""
     try:
         input_bytes = base64.b64decode(payload.input_pdf_b64, validate=True)
@@ -114,13 +119,8 @@ async def impose_apply(payload: ImposeApplyRequest) -> ImposeApplyResponse:
             detail={"error": "verify failed", "failures": verify.failures},
         )
 
-    logger.info(
-        "impose.apply.ok",
-        output_sha256=result.pdf_sha256[:16],
-        sheets_written=result.sheets_written,
-    )
-
-    return ImposeApplyResponse(
+    consent = parse_consent(request)
+    response = ImposeApplyResponse(
         output_pdf_b64=base64.b64encode(result.output_bytes).decode("ascii"),
         pdf_sha256=result.pdf_sha256,
         input_sha256=input_sha256,
@@ -131,6 +131,23 @@ async def impose_apply(payload: ImposeApplyRequest) -> ImposeApplyResponse:
         cells_per_sheet=result.cells_per_sheet,
         input_pages=result.input_pages,
     )
+    retained = persist_if_opted_in(
+        consent=consent,
+        producer="impose",
+        tenant=resolve_tenant(request),
+        input_bytes=input_bytes,
+        output_bytes=result.output_bytes,
+        result=response.model_dump(mode="json"),
+        input_sha256=input_sha256,
+    )
+    logger.info(
+        "impose.apply.ok",
+        output_sha256=result.pdf_sha256[:16],
+        sheets_written=result.sheets_written,
+        consent=consent,
+        retained=retained,
+    )
+    return response
 
 
 def _resolve_codex_pdf_version() -> str:

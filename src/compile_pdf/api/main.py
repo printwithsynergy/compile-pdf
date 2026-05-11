@@ -273,6 +273,17 @@ def _maybe_mount_routers() -> None:
             )
         except ImportError:
             logger.debug("cjd_router_not_yet_available")
+        try:
+            from compile_pdf.retention.api import router as retention_router
+
+            app.include_router(
+                retention_router,
+                prefix="/v1/retention",
+                tags=["retention"],
+                dependencies=_AUTH_DEPS,
+            )
+        except ImportError:
+            logger.debug("retention_router_not_yet_available")
 
 
 _maybe_mount_routers()

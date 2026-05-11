@@ -23,6 +23,7 @@ from compile_pdf.lineage.store import (
     default_store,
     serialize_chain,
 )
+from compile_pdf.retention import parse_consent, resolve_tenant
 from compile_pdf.version import (
     CJD_SCHEMA_VERSION,
     VERSION,
@@ -47,11 +48,13 @@ class CjdApplyResponse(BaseModel):
 
 
 @cjd_router.post("/apply", response_model=CjdApplyResponse, status_code=status.HTTP_200_OK)
-async def cjd_apply(job: CjdJob) -> CjdApplyResponse:
+async def cjd_apply(job: CjdJob, request: Request) -> CjdApplyResponse:
     """Execute a CJD job: orchestrate the four producers in dependency
     order, persist lineage records, return the final PDF + chain."""
+    consent = parse_consent(request)
+    tenant = resolve_tenant(request)
     try:
-        result = execute(job)
+        result = execute(job, consent=consent, tenant=tenant)
     except CjdOrderError as exc:
         raise HTTPException(status_code=422, detail=f"CJD ordering rejected: {exc}") from exc
     except (ValueError, TypeError) as exc:
@@ -63,6 +66,8 @@ async def cjd_apply(job: CjdJob) -> CjdApplyResponse:
         lineage_id=result.lineage_id,
         steps=len(result.steps),
         output_sha=result.output_pdf_sha256[:16],
+        consent=consent,
+        retained_steps=sum(1 for s in result.steps if s.retained_for_training),
     )
 
     return CjdApplyResponse(
@@ -95,8 +100,10 @@ async def cjd_apply_xml(request: Request) -> CjdApplyResponse:
     except CjdXmlError as exc:
         raise HTTPException(status_code=422, detail=f"CJD XML rejected: {exc}") from exc
 
+    consent = parse_consent(request)
+    tenant = resolve_tenant(request)
     try:
-        result = execute(job)
+        result = execute(job, consent=consent, tenant=tenant)
     except CjdOrderError as exc:
         raise HTTPException(status_code=422, detail=f"CJD ordering rejected: {exc}") from exc
     except (ValueError, TypeError) as exc:
@@ -107,6 +114,8 @@ async def cjd_apply_xml(request: Request) -> CjdApplyResponse:
         lineage_id=result.lineage_id,
         steps=len(result.steps),
         output_sha=result.output_pdf_sha256[:16],
+        consent=consent,
+        retained_steps=sum(1 for s in result.steps if s.retained_for_training),
     )
 
     return CjdApplyResponse(
@@ -152,6 +161,7 @@ def _step_to_dict(step) -> dict[str, object]:  # type: ignore[no-untyped-def]
         "output_sha256": step.output_sha256,
         "cache_key": step.cache_key,
         "plan_sha256": step.plan_sha256,
+        "retained_for_training": step.retained_for_training,
     }
     if step.extras:
         payload["extras"] = dict(step.extras)

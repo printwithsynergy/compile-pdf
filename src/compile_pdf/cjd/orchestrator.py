@@ -31,6 +31,7 @@ from compile_pdf.cjd.schema import (
 from compile_pdf.impose.engine import apply_plan as apply_impose
 from compile_pdf.lineage.store import LineageStep, LineageStore, default_store
 from compile_pdf.marks.engine import apply_template as apply_marks
+from compile_pdf.retention import persist_if_opted_in
 from compile_pdf.rewrite.engine import apply_plan as apply_rewrite
 from compile_pdf.trap.engine import apply_policy as apply_trap
 from compile_pdf.version import CODEX_DOCUMENT_SCHEMA_VERSION_PIN
@@ -58,12 +59,20 @@ def execute(
     job: CjdJob,
     *,
     store: LineageStore | None = None,
+    consent: bool = False,
+    tenant: str = "anonymous",
 ) -> CjdResult:
     """Run a CJD job end-to-end and return the final PDF + chain.
 
     ``store`` defaults to the process-wide :func:`default_store` so a
     subsequent ``GET /v1/lineage/{id}`` in the same process surfaces
     the chain.
+
+    ``consent`` and ``tenant`` are threaded from the inbound request
+    and apply to every step: each step persists its (input, output,
+    plan) triplet when consent is true and a bucket is configured,
+    and the per-step lineage record stamps the decision so
+    ``GET /v1/lineage/{id}`` reflects what was retained.
     """
     store = store or default_store()
     ordered_steps = _validate_ordering(job.steps, strict=job.strict_order)
@@ -86,6 +95,25 @@ def execute(
             canonical_plan_sha256=plan_sha,
             **codex_versions,
         )
+        retained = persist_if_opted_in(
+            consent=consent,
+            producer=producer_name,
+            tenant=tenant,
+            input_bytes=current_bytes,
+            output_bytes=output_bytes,
+            result={
+                "step_index": step_index,
+                "lineage_id": lineage_id,
+                "producer": producer_name,
+                "input_sha256": before_sha,
+                "output_sha256": output_sha,
+                "cache_key": cache_key,
+                "plan_sha256": plan_sha,
+                "extras": dict(extras),
+                "plan": plan_dict,
+            },
+            input_sha256=before_sha,
+        )
         record = LineageStep(
             lineage_id=lineage_id,
             step_index=step_index,
@@ -96,6 +124,7 @@ def execute(
             plan_sha256=plan_sha,
             extras=extras,
             trap_diff=step_trap_diff,
+            retained_for_training=retained,
         )
         store.put(record)
         chain.append(record)

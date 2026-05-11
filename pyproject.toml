@@ -1,6 +1,6 @@
 [project]
 name = "compile-pdf"
-version = "0.4.1"
+version = "0.5.0"
 description = "CompilePDF — the only writer in the Print With Synergy stack. Rewrite, marks, impose, and trap producers built on top of codex-pdf."
 readme = "README.md"
 license = { text = "AGPL-3.0-or-later" }
@@ -97,6 +97,10 @@ ignore = ["E501"]
 "tests/*" = ["N802"]
 # Fake S3 client mirrors boto3's PascalCase kwargs verbatim.
 "tests/test_lineage_s3.py" = ["N802", "N803"]
+"tests/test_retention_store.py" = ["N802", "N803"]
+"tests/test_retention_api.py" = ["N802", "N803"]
+"tests/test_retention_producer_apis.py" = ["N802", "N803"]
+"tests/test_retention_cjd.py" = ["N802", "N803"]
 
 [tool.mypy]
 python_version = "3.12"
