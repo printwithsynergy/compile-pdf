@@ -69,12 +69,12 @@ version, plus the Codex section versions Compile was built against:
 ```bash
 $ compile-pdf version
 {
-  "compile_version": "0.1.0",
+  "compile_version": "0.5.1",
   "producer_schema_versions": { "rewrite": "1.0.0", … },
   "compile_document_schema_version": "1.0.0",
   "cjd_schema_version": "1.0.0",
   "codex_section_versions": { "color": "1.1.0", "geom": "1.1.0", … },
-  "codex_pdf_package_version": "1.7.0"
+  "codex_pdf_package_version": "1.8.1"
 }
 ```
 
@@ -92,20 +92,19 @@ probe a remote instance.
 ### `compile-pdf schema {rewrite|marks|impose|trap|cjd}`
 
 Dumps the JSON Schema document for the named producer (or for the
-CJD envelope). Schemas live under `compile_pdf.schemas.v1.*` once
-producers ship; Phase 0 emits a placeholder.
+CJD envelope). Schemas live under `compile_pdf.schemas.v1.*`.
 
 ### `compile-pdf cjd apply <job.json|job.xml>`
 
 Submits a Compile Job Definition — a multi-producer envelope that
-chains rewrite → marks → impose → trap in one call. Lands in
-Phase 5; see [`COMPILE-IMPL-PLAN.md`](../COMPILE-IMPL-PLAN.md).
+chains rewrite → marks → impose → trap in one call. JSON and XML
+(JDF / PJTF style) bodies are both accepted.
 
 ### `compile-pdf lineage <id> [--chain]`
 
-Reads a lineage record from the configured S3 bucket. `--chain`
-walks every producer step that contributed to the final artifact.
-Lands in Phase 5.
+Reads a lineage record from the configured backend (memory / Redis
+/ S3). `--chain` walks every producer step that contributed to the
+final artifact, including the `retained_for_training` flag per step.
 
 ## Exit codes
 

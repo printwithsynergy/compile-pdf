@@ -76,7 +76,17 @@ No Compile-side geometry math.
 The same template + same input produces byte-identical output.
 Reference rasters at 300 DPI lock visual fidelity in CI.
 
+## Retention-for-training
+
+Both endpoints honour the consent signal. JSON callers send the
+header `X-Compile-Retain-For-Training`; multipart callers can use
+the same header or the form field `retain_for_training`. Header
+takes precedence when both are present. See
+[`operations/retention.md`](./operations/retention.md).
+
 ## Status
 
-Skeleton. Lands in Phase 2 of
-[`COMPILE-IMPL-PLAN.md`](../COMPILE-IMPL-PLAN.md).
+Shipped. `POST /v1/marks/apply` (inline JSON) and
+`POST /v1/marks/apply-multipart` (multipart upload — supports
+external-file marks) are live; the engine consumes Codex's geometry
+primitives exclusively.

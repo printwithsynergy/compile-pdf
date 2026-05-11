@@ -25,25 +25,30 @@ domain or custom apex). Auth modes are documented in
 | `GET` | `/v1/contract` | Full contract surface (this document, JSON) |
 | `GET` | `/v1/schema/{name}` | JSON Schema for a producer plan |
 | `GET` | `/metrics` | Prometheus exposition |
-| `POST` | `/v1/rewrite/apply` | Apply a rewrite plan (Phase 1) |
-| `POST` | `/v1/marks/apply` | Apply a marks template (Phase 2) |
-| `POST` | `/v1/impose/apply` | Apply an impose layout (Phase 3) |
-| `POST` | `/v1/trap/apply` | Apply a trap policy (Phase 4) |
-| `POST` | `/v1/cjd/apply` | Apply a multi-producer CJD envelope (Phase 5) |
-| `GET` | `/v1/lineage/{id}` | Read a lineage record (Phase 5) |
+| `POST` | `/v1/rewrite/apply` | Apply a rewrite plan |
+| `POST` | `/v1/marks/apply` | Apply a marks template (inline) |
+| `POST` | `/v1/marks/apply-multipart` | Apply a marks template (multipart upload — supports external-file marks) |
+| `POST` | `/v1/impose/apply` | Apply an impose layout |
+| `POST` | `/v1/trap/apply` | Apply a trap policy |
+| `POST` | `/v1/cjd/apply` | Apply a multi-producer CJD envelope (JSON) |
+| `POST` | `/v1/cjd/apply-xml` | Apply a CJD envelope (XML / JDF / PJTF body) |
+| `GET` | `/v1/lineage/{id}` | Read a lineage chain by id |
+| `GET` | `/v1/lineage` | List known lineage ids (paginated) |
+| `POST` | `/v1/retention/delete` | Data-subject erasure: bulk-delete every retention object containing `/{sha256}/` |
 
 ## `/v1/healthz` shape
 
 ```json
 {
   "status": "ok",
-  "version": "0.1.0",
+  "version": "0.5.1",
   "producer": "all",
   "instance_id": "01HZ…",
   "cache_backend": "memory",
   "queue_depth": 0,
+  "celery_workers": 0,
   "ghostscript": false,
-  "codex_pdf_version": "1.7.0",
+  "codex_pdf_version": "1.8.1",
   "codex_section_versions": { "color": "1.1.0", "geom": "1.1.0", "codex-document": "1.0.0" },
   "codex_live_section_versions": { "color": "1.1.0", "geom": "1.1.0", "codex-document": "1.0.0" },
   "version_skew": false
@@ -61,7 +66,7 @@ redeploy when this trips.
 {
   "contract_name": "compile-pdf",
   "schema_version": "1.0.0",
-  "package_version": "0.1.0",
+  "package_version": "0.5.1",
   "schema_id": "https://printwithsynergy.com/schemas/compile/v1",
   "endpoints": ["/healthz", "/v1/healthz", "/v1/version", "/v1/contract", … ],
   "producer_schema_versions": { "rewrite": "1.0.0", "marks": "1.0.0", "impose": "1.0.0", "trap": "1.0.0", "cjd": "1.0.0" },
@@ -79,7 +84,7 @@ Each producer's schema version bumps independently:
   `/v1` stays live during the transition window.
 
 The Codex pin is broader: Compile's `pyproject.toml` declares
-`codex-pdf>=1.4.2,<2.0`. Cross-major bumps require code review.
+`codex-pdf>=1.8.1,<2.0`. Cross-major bumps require code review.
 
 ## Codex section versions Compile cares about
 
@@ -104,7 +109,40 @@ the cache-key composer in `src/compile_pdf/cache.py`.
 | `trap` | `TRAP_SCHEMA_VERSION` | `compile-pdf schema trap` |
 | `cjd` | `CJD_SCHEMA_VERSION` | `compile-pdf schema cjd` |
 
-All start at `1.0.0` in 0.1.0; each bumps independently.
+All start at `1.0.0`; each bumps independently.
+
+## Retention-for-training opt-in
+
+Every producer endpoint (and the CJD orchestrator) honours an
+explicit opt-in signal that retains the call's inputs and outputs
+for engine training. Off by default; engaged per-request.
+
+| Channel | Where | Truthy values |
+|---|---|---|
+| Header | `X-Compile-Retain-For-Training` (every producer endpoint) | `true`, `1`, `yes` (case-insensitive, trimmed) |
+| Form field | `retain_for_training` (multipart endpoints only) | same as header |
+| Tenant slug | `X-Compile-Tenant` header (optional, slugified) | any string → slug; absent → `anonymous` |
+
+When the signal is truthy **and** `COMPILE_RETAIN_BUCKET` is set,
+the endpoint persists three blobs per call:
+
+```
+{prefix}/{tenant}/{producer}/{YYYY-MM-DD}/{input_sha256}/input.pdf
+{prefix}/{tenant}/{producer}/{YYYY-MM-DD}/{input_sha256}/output.pdf
+{prefix}/{tenant}/{producer}/{YYYY-MM-DD}/{input_sha256}/result.json
+```
+
+Each object is tagged `ttl-days={COMPILE_RETAIN_TTL_DAYS}` so the
+bucket's lifecycle policy can sweep at expiry. The
+`output_pdf_b64` field is stripped from `result.json` (bytes already
+live in `output.pdf`).
+
+`POST /v1/retention/delete` bulk-deletes every object whose key
+contains `/{sha256}/`. Zero hits is **not** an error (200 with
+`deleted: 0`). Misconfiguration → 503; boto3 errors → 500.
+
+See [`operations/retention.md`](./operations/retention.md) for the
+operator-side env-var inventory and lifecycle-policy template.
 
 ## Lineage record schema
 
@@ -113,19 +151,26 @@ Lineage records (one per producer step, S3-stored) carry:
 ```json
 {
   "lineage_id": "01HZ…",
+  "step_index": 0,
   "producer": "trap",
   "input_sha256": "…",
   "output_sha256": "…",
   "plan_sha256": "…",
   "cache_key": "…",
+  "retained_for_training": false,
   "engine_fingerprint": { "engine": "pure_python", "geom_schema_version": "1.1.0", "color_schema_version": "1.1.0" },
-  "compile_version": "0.1.0",
-  "codex_pdf_version": "1.7.0",
+  "compile_version": "0.5.1",
+  "codex_pdf_version": "1.8.1",
   "parent_lineage_id": "01HZ…",
   "started_at": "…",
   "duration_ms": 1234
 }
 ```
+
+`retained_for_training` reflects the per-step retention decision —
+the consent header + bucket configuration in effect when the
+producer ran. The flag is preserved through the store and surfaced
+on `GET /v1/lineage/{id}`.
 
 The `parent_lineage_id` field is what lets `compile-pdf lineage <id>
 --chain` walk the full producer history of a final artifact.

@@ -1,25 +1,19 @@
 # COMPILE-IMPL-PLAN
 
-> **Status:** Working draft, synthesized from signals already in the
-> repo (CHANGELOG, README, version.py, cache.py, the producer module
-> docstrings, the `compile-pdf-marketing` 0.1.0 changelog entry, and
-> the `consume_surface_audit.py` ban list). The README and the
-> marketing site reference this file as if it exists; it now does.
-> Revise as the real one.
+> **Status:** Phases 0–5 shipped in 0.5.1. All four producers
+> (`rewrite`, `marks`, `impose`, `trap`) plus the CJD orchestrator
+> and lineage store are live on PyPI. Retention-for-training is
+> opt-in per request. The phase walkthrough below is preserved as
+> historical record. New work tracks against
+> [`CHANGELOG.md`](./CHANGELOG.md) and the open PRs.
 
 ## Why this plan exists
 
 CompilePDF is the **only writer** in the Print With Synergy stack.
 Codex tells the truth about a PDF (read-only); Compile writes the
-bytes. The package has shipped its engine chassis (FastAPI app,
-health/contract endpoints, request-id middleware, cache-key composer,
-audit script) but **none of the four producers — `rewrite`, `marks`,
-`impose`, `trap` — have any implementation yet.** They are docstring
-stubs holding a schema-version constant.
-
-This plan walks the producers from skeleton to v1.0 in dependency
-order, with each phase ending at a hard gate that proves the producer
-is real before the next one starts.
+bytes. This plan walked the producers from skeleton to v1.0 in
+dependency order, with each phase ending at a hard gate that proved
+the producer was real before the next one started.
 
 ## Architectural invariants (locked)
 
@@ -76,7 +70,7 @@ inside this plan. New phases inherit them:
   surface test per producer asserts the imports resolve.
 
 **Phase 0 gate:** `pytest -q` passes, the audit script passes, `pip
-install -e .[dev,geom]` succeeds against the codex-pdf 1.7.0 wheel.
+install -e .[dev,geom]` succeeds against the codex-pdf 1.8.1 wheel.
 
 ## Phase 1 — Rewrite producer
 
