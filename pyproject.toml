@@ -1,6 +1,6 @@
 [project]
 name = "compile-pdf"
-version = "0.1.0"
+version = "0.4.1"
 description = "CompilePDF — the only writer in the Print With Synergy stack. Rewrite, marks, impose, and trap producers built on top of codex-pdf."
 readme = "README.md"
 license = { text = "AGPL-3.0-or-later" }
