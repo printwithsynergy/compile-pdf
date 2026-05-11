@@ -175,9 +175,7 @@ def test_marks_multipart_persists_via_form_field(printer_pdf: bytes, fake_s3: _F
         "/v1/marks/apply-multipart",
         files={"input_pdf": ("in.pdf", printer_pdf, "application/pdf")},
         data={
-            "template": json.dumps(
-                {"marks": [{"type": "register", "anchor": "trim_corners"}]}
-            ),
+            "template": json.dumps({"marks": [{"type": "register", "anchor": "trim_corners"}]}),
             "retain_for_training": "true",
         },
     )
@@ -192,9 +190,7 @@ def test_marks_multipart_header_overrides_form_field(printer_pdf: bytes, fake_s3
         "/v1/marks/apply-multipart",
         files={"input_pdf": ("in.pdf", printer_pdf, "application/pdf")},
         data={
-            "template": json.dumps(
-                {"marks": [{"type": "register", "anchor": "trim_corners"}]}
-            ),
+            "template": json.dumps({"marks": [{"type": "register", "anchor": "trim_corners"}]}),
             "retain_for_training": "true",
         },
         headers={"X-Compile-Retain-For-Training": "false"},

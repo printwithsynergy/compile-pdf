@@ -53,9 +53,7 @@ def _b64(data: bytes) -> str:
     return base64.b64encode(data).decode("ascii")
 
 
-def test_cjd_apply_persists_every_step_when_opted_in(
-    printer_pdf: bytes, fake_s3: _FakeS3
-) -> None:
+def test_cjd_apply_persists_every_step_when_opted_in(printer_pdf: bytes, fake_s3: _FakeS3) -> None:
     client = TestClient(app)
     response = client.post(
         "/v1/cjd/apply",
@@ -64,9 +62,7 @@ def test_cjd_apply_persists_every_step_when_opted_in(
             "steps": [
                 {
                     "type": "rewrite",
-                    "plan": {
-                        "ops": [{"op": "metadata_set", "key": "Title", "value": "x"}]
-                    },
+                    "plan": {"ops": [{"op": "metadata_set", "key": "Title", "value": "x"}]},
                 },
                 {
                     "type": "marks",
@@ -96,9 +92,7 @@ def test_cjd_apply_no_persist_without_consent(printer_pdf: bytes, fake_s3: _Fake
             "steps": [
                 {
                     "type": "rewrite",
-                    "plan": {
-                        "ops": [{"op": "metadata_set", "key": "Title", "value": "x"}]
-                    },
+                    "plan": {"ops": [{"op": "metadata_set", "key": "Title", "value": "x"}]},
                 },
             ],
         },
@@ -109,9 +103,7 @@ def test_cjd_apply_no_persist_without_consent(printer_pdf: bytes, fake_s3: _Fake
     assert body["steps"][0]["retained_for_training"] is False
 
 
-def test_cjd_lineage_get_surfaces_retained_flag(
-    printer_pdf: bytes, fake_s3: _FakeS3
-) -> None:
+def test_cjd_lineage_get_surfaces_retained_flag(printer_pdf: bytes, fake_s3: _FakeS3) -> None:
     client = TestClient(app)
     apply = client.post(
         "/v1/cjd/apply",
@@ -120,9 +112,7 @@ def test_cjd_lineage_get_surfaces_retained_flag(
             "steps": [
                 {
                     "type": "rewrite",
-                    "plan": {
-                        "ops": [{"op": "metadata_set", "key": "Title", "value": "x"}]
-                    },
+                    "plan": {"ops": [{"op": "metadata_set", "key": "Title", "value": "x"}]},
                 },
             ],
         },
