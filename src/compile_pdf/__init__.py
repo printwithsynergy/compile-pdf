@@ -18,8 +18,9 @@ Architectural invariants:
 - Every producer emits deterministic bytes; same input + same plan +
   same engine fingerprint → same SHA-256 output.
 
-See ``COMPILE-DESIGN-SPEC.md`` for the complete design rationale and
-``COMPILE-IMPL-PLAN.md`` for the rollout roadmap.
+See ``docs/`` (architecture, contract, deploy, per-producer pages,
+``operations/``) for the operator + integrator reference and
+``CHANGELOG.md`` for the per-release log.
 """
 
 from compile_pdf.version import (

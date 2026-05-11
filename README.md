@@ -76,9 +76,8 @@ CLI defaults to local-mode (in-process) when `COMPILE_API_BASE` is unset; otherw
 
 ## Docs
 
-- Design spec: [`COMPILE-DESIGN-SPEC.md`](./COMPILE-DESIGN-SPEC.md)
-- Implementation plan: [`COMPILE-IMPL-PLAN.md`](./COMPILE-IMPL-PLAN.md)
 - Operator + integrator docs: [`docs/`](./docs)
+- Per-release log: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## License
 
