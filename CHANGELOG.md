@@ -4,6 +4,18 @@ All notable changes to compile-pdf will be documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] — 2026-05-11
+
+### Changed
+
+- Bump `codex-pdf` floor to `>=1.8.1,<2.0`. Codex 1.8.0 bumped both
+  `COLOR_SCHEMA_VERSION` and `GEOM_SCHEMA_VERSION` to `1.1.0`; 1.8.1
+  is the current patch. Compile already runs cleanly against the
+  new surface (465/465 tests pass); this just raises the floor so
+  new installs always pick up the section-version bump.
+- Refresh `CODEX_REQUIRED_SECTION_VERSIONS` default in `.env.example`
+  to `{"color":"1.1.0","geom":"1.1.0"}` (was `1.0.0` for both).
+
 ## [0.5.0] — 2026-05-11
 
 ### Added

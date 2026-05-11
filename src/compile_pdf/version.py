@@ -11,7 +11,7 @@ without forcing marks/impose/trap to also bump.
 
 from __future__ import annotations
 
-VERSION = "0.5.0"
+VERSION = "0.5.1"
 """Compile-PDF package version (semver). Bumped on every release."""
 
 REWRITE_SCHEMA_VERSION = "1.0.0"
