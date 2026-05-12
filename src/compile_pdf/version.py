@@ -11,7 +11,7 @@ without forcing marks/impose/trap to also bump.
 
 from __future__ import annotations
 
-VERSION = "0.5.1"
+VERSION = "0.5.2"
 """Compile-PDF package version (semver). Bumped on every release."""
 
 REWRITE_SCHEMA_VERSION = "1.0.0"
@@ -36,7 +36,7 @@ COMPILE_DOCUMENT_SCHEMA_VERSION = "1.0.0"
 """Top-level Compile-document schema version. Bumps when the lineage
 record shape itself changes."""
 
-CODEX_DOCUMENT_SCHEMA_VERSION_PIN = "1.0.0"
+CODEX_DOCUMENT_SCHEMA_VERSION_PIN = "1.2.0"
 """Codex-document schema version Compile is built against. Codex does not
 yet publish this as a constant on `codex_pdf`, so we pin it here and
 surface it via /v1/healthz and /v1/contract for operators. Bump alongside

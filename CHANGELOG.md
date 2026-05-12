@@ -4,6 +4,20 @@ All notable changes to compile-pdf will be documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] — 2026-05-12
+
+### Changed
+
+- Bump `codex-pdf` floor to `>=1.9.0,<2.0`. Codex 1.9.0 completes the
+  unified extraction campaign (text-regions / conformance / renders
+  endpoints, tenant scoping, rate limiting, observability metrics).
+  The compile-pdf surface is consumer-only — additive on the codex
+  side, no behavior change here.
+- Bump `CODEX_DOCUMENT_SCHEMA_VERSION_PIN` to `1.2.0` (was `1.0.0`).
+  Reflects the additive schema bump in codex-pdf 1.9.0
+  (`CodexPage.detected_text_regions`, `CodexDocument.conformance_verdicts`,
+  `CodexDocument.stage_durations_ms`). Compile-document shape unchanged.
+
 ## [0.5.1] — 2026-05-11
 
 ### Changed

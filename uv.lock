@@ -284,7 +284,7 @@ wheels = [
 
 [[package]]
 name = "codex-pdf"
-version = "1.8.1"
+version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastapi" },
@@ -297,9 +297,9 @@ dependencies = [
     { name = "structlog" },
     { name = "uvicorn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a9/f4/dcbbb7af1e4cd8f0b1e8b0319ed41c4adde6f9c6406c3b32f789dd134bc5/codex_pdf-1.8.1.tar.gz", hash = "sha256:c3410db64933d48752f2c738444ead26bb5bd7b7ca75e57fff5a9fe7185f58e7", size = 726595, upload-time = "2026-05-11T01:00:06.592Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/db/93/acd240888a669175f9b7f55e561fa2e2a53d79e13fa962f869da796502a8/codex_pdf-1.9.0.tar.gz", hash = "sha256:125e0f82cdb23b6b205813ad5ff66b795165c7601d34c13803d88b37d296926e", size = 767542, upload-time = "2026-05-12T08:44:47.689Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/97/e4/9464a2593920e6f0c38139c2640245605794c434bddaa17e1148e2a780d8/codex_pdf-1.8.1-py3-none-any.whl", hash = "sha256:b21aef56b784ffdd34ad651cf4249b034545c188b103d01dd13f16610e99cabd", size = 604992, upload-time = "2026-05-11T01:00:05.203Z" },
+    { url = "https://files.pythonhosted.org/packages/25/89/cb9172b613899225bd197f39913f0f5dafa06b18bb86dfb4a1668561e227/codex_pdf-1.9.0-py3-none-any.whl", hash = "sha256:c7c1b4d455d46576ed34c9179808436df78382b4a703c805f334bf8725a160f8", size = 620626, upload-time = "2026-05-12T08:44:46.37Z" },
 ]
 
 [[package]]
@@ -313,7 +313,7 @@ wheels = [
 
 [[package]]
 name = "compile-pdf"
-version = "0.5.1"
+version = "0.5.2"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
@@ -366,7 +366,7 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.34" },
     { name = "celery", extras = ["redis"], specifier = ">=5.3" },
     { name = "click", specifier = ">=8.1" },
-    { name = "codex-pdf", specifier = ">=1.8.1,<2.0" },
+    { name = "codex-pdf", specifier = ">=1.9.0,<2.0" },
     { name = "defusedxml", specifier = ">=0.7.1" },
     { name = "fastapi", specifier = ">=0.110" },
     { name = "httpx", specifier = ">=0.27" },
