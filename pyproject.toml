@@ -1,6 +1,6 @@
 [project]
 name = "compile-pdf"
-version = "0.5.1"
+version = "0.5.2"
 description = "CompilePDF — the only writer in the Print With Synergy stack. Rewrite, marks, impose, and trap producers built on top of codex-pdf."
 readme = "README.md"
 license = { text = "AGPL-3.0-or-later" }
@@ -17,7 +17,7 @@ classifiers = [
 ]
 
 dependencies = [
-  "codex-pdf>=1.8.1,<2.0",
+  "codex-pdf>=1.9.0,<2.0",
   "fastapi>=0.110",
   "uvicorn[standard]>=0.27",
   "pikepdf>=8.13",
