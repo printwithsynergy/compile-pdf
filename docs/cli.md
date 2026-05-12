@@ -74,7 +74,7 @@ $ compile-pdf version
   "compile_document_schema_version": "1.0.0",
   "cjd_schema_version": "1.0.0",
   "codex_section_versions": { "color": "1.1.0", "geom": "1.1.0", … },
-  "codex_pdf_package_version": "1.8.1"
+  "codex_pdf_package_version": "1.15.0"
 }
 ```
 
