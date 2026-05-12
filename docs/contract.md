@@ -48,7 +48,7 @@ domain or custom apex). Auth modes are documented in
   "queue_depth": 0,
   "celery_workers": 0,
   "ghostscript": false,
-  "codex_pdf_version": "1.8.1",
+  "codex_pdf_version": "1.15.0",
   "codex_section_versions": { "color": "1.1.0", "geom": "1.1.0", "codex-document": "1.0.0" },
   "codex_live_section_versions": { "color": "1.1.0", "geom": "1.1.0", "codex-document": "1.0.0" },
   "version_skew": false
@@ -84,7 +84,7 @@ Each producer's schema version bumps independently:
   `/v1` stays live during the transition window.
 
 The Codex pin is broader: Compile's `pyproject.toml` declares
-`codex-pdf>=1.8.1,<2.0`. Cross-major bumps require code review.
+`codex-pdf>=1.15.0,<2.0`. Cross-major bumps require code review.
 
 ## Codex section versions Compile cares about
 
@@ -160,7 +160,7 @@ Lineage records (one per producer step, S3-stored) carry:
   "retained_for_training": false,
   "engine_fingerprint": { "engine": "pure_python", "geom_schema_version": "1.1.0", "color_schema_version": "1.1.0" },
   "compile_version": "0.5.1",
-  "codex_pdf_version": "1.8.1",
+  "codex_pdf_version": "1.15.0",
   "parent_lineage_id": "01HZ…",
   "started_at": "…",
   "duration_ms": 1234
