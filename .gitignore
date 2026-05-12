@@ -66,3 +66,6 @@ reports/
 # Node (in case marketing repo shares root tooling later)
 node_modules/
 *.tsbuildinfo
+
+# Local release build artifacts
+/dist-*/
