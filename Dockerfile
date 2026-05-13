@@ -20,7 +20,11 @@ RUN if [ -n "$NEEDS_NATIVE" ]; then \
     fi
 
 WORKDIR /app
-COPY pyproject.toml ./
+# README.md is referenced by ``readme = "README.md"`` in pyproject.toml
+# and hatchling reads it at build time — leaving it out of the build
+# context makes ``hatchling.build.build_editable`` fail with a cryptic
+# "Call to build_editable failed (exit status: 1)" inside ``uv sync``.
+COPY pyproject.toml README.md ./
 COPY src/ ./src/
 COPY schemas/ ./schemas/
 
