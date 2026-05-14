@@ -98,3 +98,40 @@ def test_verify_layer2_skip_when_replay_disabled(simple_pdf: bytes) -> None:
         determinism_replay=False,
     )
     assert v.layer2_determinism
+
+
+def test_output_contains_traps_ocg(simple_pdf: bytes) -> None:
+    """output_trap_layer=True (the default) must produce an OCG named 'Traps'."""
+    policy = TrapPolicy(
+        default_trap_width_pt=0.5,
+        output_trap_layer=True,
+        trap_zones=[
+            TrapZone(page_index=0, rect_pt=(100, 100, 300, 300), from_ink="C", to_ink="M"),
+        ],
+    )
+    result = apply_policy(simple_pdf, policy)
+    pdf = pikepdf.open(io.BytesIO(result.output_bytes))
+    try:
+        assert pikepdf.Name.OCProperties in pdf.Root, "No OCProperties in Root"
+        ocgs = list(pdf.Root.OCProperties.OCGs)
+        assert len(ocgs) == 1, f"Expected 1 OCG, got {len(ocgs)}"
+        assert str(ocgs[0].Name) == "Traps", f"OCG name was {ocgs[0].Name!r}"
+    finally:
+        pdf.close()
+
+
+def test_output_no_ocg_when_layer_disabled(simple_pdf: bytes) -> None:
+    """output_trap_layer=False must not write OCProperties."""
+    policy = TrapPolicy(
+        default_trap_width_pt=0.5,
+        output_trap_layer=False,
+        trap_zones=[
+            TrapZone(page_index=0, rect_pt=(100, 100, 300, 300), from_ink="C", to_ink="M"),
+        ],
+    )
+    result = apply_policy(simple_pdf, policy)
+    pdf = pikepdf.open(io.BytesIO(result.output_bytes))
+    try:
+        assert pikepdf.Name.OCProperties not in pdf.Root, "OCProperties present but flag was False"
+    finally:
+        pdf.close()

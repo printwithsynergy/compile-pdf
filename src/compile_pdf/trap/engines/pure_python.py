@@ -85,6 +85,16 @@ def apply(input_bytes: bytes, policy: TrapPolicy) -> TrapEngineResult:
     rules_by_pair = _index_rules(policy)
 
     pdf = pikepdf.open(io.BytesIO(input_bytes))
+    ocg: pikepdf.Object | None = None
+    if policy.output_trap_layer:
+        ocg = pdf.make_indirect(
+            pikepdf.Dictionary(
+                Type=pikepdf.Name.OCG,
+                Name=pikepdf.String("Traps"),
+                Intent=pikepdf.Array([pikepdf.Name.View, pikepdf.Name.Design]),
+            )
+        )
+        _ensure_ocg_in_root(pdf, ocg)
     operations: list[TrapApplication] = []
     try:
         for zone in policy.trap_zones:
@@ -101,7 +111,7 @@ def apply(input_bytes: bytes, policy: TrapPolicy) -> TrapEngineResult:
 
             trap_polygon = _compute_trap_polygon_for_zone(zone, direction, width)
             page = pdf.pages[zone.page_index]
-            _stamp_overlap(pdf, page, trap_polygon, from_resolution)
+            _stamp_overlap(pdf, page, trap_polygon, from_resolution, ocg)
 
             operations.append(
                 TrapApplication(
@@ -275,22 +285,60 @@ def _approx_lab(rgb: tuple[int, int, int]) -> tuple[float, float, float]:
     return (l_star, 0.0, 0.0)
 
 
+def _ensure_ocg_in_root(pdf: pikepdf.Pdf, ocg: pikepdf.Object) -> None:
+    """Add ``ocg`` to ``pdf.Root.OCProperties``, creating the structure if absent."""
+    if pikepdf.Name.OCProperties not in pdf.Root:
+        pdf.Root.OCProperties = pikepdf.Dictionary(
+            OCGs=pikepdf.Array([ocg]),
+            D=pikepdf.Dictionary(
+                ON=pikepdf.Array([ocg]),
+                OFF=pikepdf.Array(),
+                Order=pikepdf.Array([ocg]),
+                RBGroups=pikepdf.Array(),
+            ),
+        )
+    else:
+        ocgs = pdf.Root.OCProperties.OCGs
+        if ocg not in ocgs:
+            ocgs.append(ocg)
+        on = pdf.Root.OCProperties.D.ON
+        if ocg not in on:
+            on.append(ocg)
+
+
 def _stamp_overlap(
     pdf: pikepdf.Pdf,
     page: pikepdf.Page,
     polygon: tuple[tuple[float, float], ...],
     color: SpotSwatchResolution,
+    ocg: pikepdf.Object | None = None,
 ) -> None:
     """Append a content stream that fills ``polygon`` with the resolved
-    RGB color. Keeps the trap visible without modifying existing page
-    content."""
+    RGB color. When ``ocg`` is provided, wraps the content in a BDC/EMC
+    marked-content sequence so PDF viewers can toggle the trap layer."""
     r, g, b = color.rgb
     norm = (r / 255.0, g / 255.0, b / 255.0)
-    parts = ["q\n", f"{norm[0]:.4f} {norm[1]:.4f} {norm[2]:.4f} rg\n"]
-    parts.append(f"{polygon[0][0]:.4f} {polygon[0][1]:.4f} m\n")
-    for px, py in polygon[1:]:
-        parts.append(f"{px:.4f} {py:.4f} l\n")
-    parts.append("h f Q\n")
+    if ocg is not None:
+        resources = page.Resources
+        if pikepdf.Name.Properties not in resources:
+            resources[pikepdf.Name.Properties] = pikepdf.Dictionary()
+        resources[pikepdf.Name.Properties][pikepdf.Name.TrapLayer] = ocg
+        parts = [
+            "/OC /TrapLayer BDC\n",
+            "q\n",
+            f"{norm[0]:.4f} {norm[1]:.4f} {norm[2]:.4f} rg\n",
+        ]
+        parts.append(f"{polygon[0][0]:.4f} {polygon[0][1]:.4f} m\n")
+        for px, py in polygon[1:]:
+            parts.append(f"{px:.4f} {py:.4f} l\n")
+        parts.append("h f Q\n")
+        parts.append("EMC\n")
+    else:
+        parts = ["q\n", f"{norm[0]:.4f} {norm[1]:.4f} {norm[2]:.4f} rg\n"]
+        parts.append(f"{polygon[0][0]:.4f} {polygon[0][1]:.4f} m\n")
+        for px, py in polygon[1:]:
+            parts.append(f"{px:.4f} {py:.4f} l\n")
+        parts.append("h f Q\n")
     overlay = "".join(parts).encode("ascii")
     page.contents_add(pdf.make_stream(overlay), prepend=False)
 

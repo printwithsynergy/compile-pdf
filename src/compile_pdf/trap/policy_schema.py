@@ -123,6 +123,13 @@ class TrapPolicy(BaseModel):
             "fingerprint locked into the lineage record."
         ),
     )
+    output_trap_layer: bool = Field(
+        default=True,
+        description=(
+            "When true, wrap trap content in an OCG named 'Traps' so PDF "
+            "viewers can toggle the layer on/off."
+        ),
+    )
 
 
 class TrapPolicyRoot(RootModel[TrapPolicy]):
