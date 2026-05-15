@@ -17,6 +17,12 @@ classifiers = [
 ]
 
 dependencies = [
+  "compile-pdf-core>=0.1.0,<1.0",
+  "compile-pdf-trap>=0.1.0,<1.0",
+  "compile-pdf-impose>=0.1.0,<1.0",
+  "compile-pdf-marks>=0.1.0,<1.0",
+  "compile-pdf-rewrite>=0.1.0,<1.0",
+  "compile-pdf-cjd>=0.1.0,<1.0",
   "codex-pdf>=1.15.0,<2.0",
   "fastapi>=0.110",
   "uvicorn[standard]>=0.27",
@@ -132,15 +138,21 @@ module = [
 ]
 ignore_missing_imports = true
 
-# Producer routers mount lazily; their api modules don't exist yet
-# (Phase 1.x). Suppress the import-untyped error until they ship.
+# Producer packages don't ship py.typed markers yet.
 [[tool.mypy.overrides]]
 module = [
-    "compile_pdf.rewrite.api",
-    "compile_pdf.marks.api",
-    "compile_pdf.impose.api",
-    "compile_pdf.trap.api",
-    "compile_pdf.cjd.api",
+    "compile_pdf_core",
+    "compile_pdf_core.*",
+    "compile_pdf_trap",
+    "compile_pdf_trap.*",
+    "compile_pdf_impose",
+    "compile_pdf_impose.*",
+    "compile_pdf_marks",
+    "compile_pdf_marks.*",
+    "compile_pdf_rewrite",
+    "compile_pdf_rewrite.*",
+    "compile_pdf_cjd",
+    "compile_pdf_cjd.*",
 ]
 ignore_missing_imports = true
 
