@@ -30,10 +30,10 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel, Field
 from starlette.responses import Response
 
-from compile_pdf_core.api.auth import authenticate
-from compile_pdf_core.api.middleware import INSTANCE_ID, RequestIdMiddleware
-from compile_pdf_core.queue_status import resolve_queue_depth
-from compile_pdf_core.version import (
+from compile_pdf.api.auth import authenticate
+from compile_pdf.api.middleware import INSTANCE_ID, RequestIdMiddleware
+from compile_pdf.queue_status import resolve_queue_depth
+from compile_pdf.version import (
     CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
     COMPILE_DOCUMENT_SCHEMA_VERSION,
     PRODUCER_SCHEMA_VERSIONS,
@@ -160,7 +160,7 @@ async def healthz() -> HealthResponse:
 def _resolve_celery_workers() -> int:
     """Lazy import so the API still loads when Celery isn't configured."""
     try:
-        from compile_pdf_core.tasks import detect_workers
+        from compile_pdf.tasks import detect_workers
     except Exception:  # pragma: no cover — celery is a hard dep but be defensive
         return 0
     return detect_workers()
@@ -214,7 +214,7 @@ def _maybe_mount_routers() -> None:
     active = _resolve_active_producer()
     if active in {"rewrite", "all"}:
         try:
-            from compile_pdf_rewrite.api import router as rewrite_router
+            from compile_pdf.rewrite.api import router as rewrite_router
 
             app.include_router(
                 rewrite_router,
@@ -226,7 +226,7 @@ def _maybe_mount_routers() -> None:
             logger.debug("rewrite_router_not_yet_available")
     if active in {"marks", "all"}:
         try:
-            from compile_pdf_marks.api import router as marks_router
+            from compile_pdf.marks.api import router as marks_router
 
             app.include_router(
                 marks_router,
@@ -238,7 +238,7 @@ def _maybe_mount_routers() -> None:
             logger.debug("marks_router_not_yet_available")
     if active in {"impose", "all"}:
         try:
-            from compile_pdf_impose.api import router as impose_router
+            from compile_pdf.impose.api import router as impose_router
 
             app.include_router(
                 impose_router,
@@ -250,7 +250,7 @@ def _maybe_mount_routers() -> None:
             logger.debug("impose_router_not_yet_available")
     if active in {"trap", "all"}:
         try:
-            from compile_pdf_trap.api import router as trap_router
+            from compile_pdf.trap.api import router as trap_router
 
             app.include_router(
                 trap_router,
@@ -262,7 +262,7 @@ def _maybe_mount_routers() -> None:
             logger.debug("trap_router_not_yet_available")
     if active == "all":
         try:
-            from compile_pdf_cjd.api import cjd_router, lineage_router
+            from compile_pdf.cjd.api import cjd_router, lineage_router
 
             app.include_router(cjd_router, prefix="/v1/cjd", tags=["cjd"], dependencies=_AUTH_DEPS)
             app.include_router(
@@ -274,7 +274,7 @@ def _maybe_mount_routers() -> None:
         except ImportError:
             logger.debug("cjd_router_not_yet_available")
         try:
-            from compile_pdf_core.retention.api import router as retention_router
+            from compile_pdf.retention.api import router as retention_router
 
             app.include_router(
                 retention_router,
@@ -287,19 +287,6 @@ def _maybe_mount_routers() -> None:
 
 
 _maybe_mount_routers()
-
-
-def _mount_async_jobs_router() -> None:
-    """Mount the shared async-job polling router at /v1/jobs."""
-    try:
-        from compile_pdf_core.async_router import router as async_jobs_router
-
-        app.include_router(async_jobs_router, prefix="/v1/jobs", tags=["async-jobs"])
-    except ImportError:
-        logger.debug("async_jobs_router_not_yet_available")
-
-
-_mount_async_jobs_router()
 
 
 def _ignored() -> Any:

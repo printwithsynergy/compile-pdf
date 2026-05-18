@@ -1,6 +1,6 @@
 [project]
 name = "compile-pdf"
-version = "0.5.6"
+version = "0.5.5"
 description = "CompilePDF — the only writer in the Print With Synergy stack. Rewrite, marks, impose, and trap producers built on top of codex-pdf."
 readme = "README.md"
 license = { text = "AGPL-3.0-or-later" }
@@ -17,13 +17,7 @@ classifiers = [
 ]
 
 dependencies = [
-  "compile-pdf-core>=0.1.0,<1.0",
-  "compile-pdf-trap>=0.2.0,<1.0",
-  "compile-pdf-impose>=0.1.0,<1.0",
-  "compile-pdf-marks>=0.1.0,<1.0",
-  "compile-pdf-rewrite>=0.1.0,<1.0",
-  "compile-pdf-cjd>=0.1.0,<1.0",
-  "codex-pdf>=1.16.0,<2.0",
+  "codex-pdf>=1.15.0,<2.0",
   "fastapi>=0.110",
   "uvicorn[standard]>=0.27",
   "pikepdf>=8.13",
@@ -138,21 +132,15 @@ module = [
 ]
 ignore_missing_imports = true
 
-# Producer packages don't ship py.typed markers yet.
+# Producer routers mount lazily; their api modules don't exist yet
+# (Phase 1.x). Suppress the import-untyped error until they ship.
 [[tool.mypy.overrides]]
 module = [
-    "compile_pdf_core",
-    "compile_pdf_core.*",
-    "compile_pdf_trap",
-    "compile_pdf_trap.*",
-    "compile_pdf_impose",
-    "compile_pdf_impose.*",
-    "compile_pdf_marks",
-    "compile_pdf_marks.*",
-    "compile_pdf_rewrite",
-    "compile_pdf_rewrite.*",
-    "compile_pdf_cjd",
-    "compile_pdf_cjd.*",
+    "compile_pdf.rewrite.api",
+    "compile_pdf.marks.api",
+    "compile_pdf.impose.api",
+    "compile_pdf.trap.api",
+    "compile_pdf.cjd.api",
 ]
 ignore_missing_imports = true
 
