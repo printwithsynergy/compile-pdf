@@ -289,6 +289,19 @@ def _maybe_mount_routers() -> None:
 _maybe_mount_routers()
 
 
+def _mount_async_jobs_router() -> None:
+    """Mount the shared async-job polling router at /v1/jobs."""
+    try:
+        from compile_pdf_core.async_router import router as async_jobs_router
+
+        app.include_router(async_jobs_router, prefix="/v1/jobs", tags=["async-jobs"])
+    except ImportError:
+        logger.debug("async_jobs_router_not_yet_available")
+
+
+_mount_async_jobs_router()
+
+
 def _ignored() -> Any:
     """Reserved for future shape — keeps the symbol referenced by tests."""
     return None
