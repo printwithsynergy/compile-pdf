@@ -47,7 +47,11 @@ Shared infrastructure (one of each per Railway project):
 - **Redis** — Celery broker + cache backend.
 - **S3-compatible bucket** — lineage records + output artifacts.
 - **Codex sidecar** — read-side `/v1/extract` for plan validation
-  context.
+  context. Each producer requests only the Codex fields it needs via
+  `X-Codex-Fields` (Codex 1.18.0+); see
+  [`trap.md`](./trap.md#sparse-field-projection-codex-1180) for an
+  example. Omitting the header returns the full document (backward
+  compatible).
 
 ## Cache-key composition
 
