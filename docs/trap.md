@@ -59,6 +59,24 @@ Compile reads from the Codex extract — no Compile-side density math.
 
 No Compile-side color or geometry math.
 
+### Sparse field projection (Codex 1.18.0+)
+
+The trap producer only needs `color_spaces` and `spot_colors` from
+the Codex extract. When calling the Codex sidecar, pass
+`X-Codex-Fields: color_spaces` to skip all other extractors and
+receive only the colour-world section. This cuts the sidecar
+round-trip by ~40 % on typical files:
+
+```http
+POST /v1/extract HTTP/1.1
+X-Codex-Fields: color_spaces
+Content-Type: application/pdf
+```
+
+```ts
+const doc = await codex.extract(pdfBytes, { fields: ["color_spaces"] });
+```
+
 ## trap-diff artifact
 
 Every `trap apply` emits a JSON artifact describing every trap
