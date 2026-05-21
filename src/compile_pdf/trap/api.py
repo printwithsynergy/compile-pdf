@@ -55,6 +55,13 @@ class TrapApplyResponse(BaseModel):
     engine_fingerprint: str
     operations_count: int
     trap_diff: dict[str, object]
+    trap_findings: list[dict[str, object]] = Field(
+        default_factory=list,
+        description=(
+            "Each trap operation as a CodexFinding (type='trap_applied', "
+            "severity='info'). Page is 1-indexed; bbox is rect_pt in PDF points."
+        ),
+    )
     schema_version: str = TRAP_SCHEMA_VERSION
     compile_version: str = VERSION
 
@@ -122,6 +129,7 @@ async def trap_apply(payload: TrapApplyRequest, request: Request) -> TrapApplyRe
         )
 
     consent = parse_consent(request)
+    trap_findings = [op.to_codex_finding(idx) for idx, op in enumerate(result.operations)]
     response = TrapApplyResponse(
         output_pdf_b64=base64.b64encode(result.output_bytes).decode("ascii"),
         pdf_sha256=result.pdf_sha256,
@@ -133,6 +141,7 @@ async def trap_apply(payload: TrapApplyRequest, request: Request) -> TrapApplyRe
         engine_fingerprint=result.engine_fingerprint,
         operations_count=len(result.operations),
         trap_diff=result.trap_diff,
+        trap_findings=trap_findings,
     )
     retained = persist_if_opted_in(
         consent=consent,
