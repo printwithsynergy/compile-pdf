@@ -54,6 +54,24 @@ class TrapApplication:
     delta_e: float
     trap_polygon_pt: tuple[tuple[float, float], ...]
 
+    def to_codex_finding(self, idx: int = 0) -> dict[str, object]:
+        """Convert to CodexFinding-compatible dict for ecosystem consumers."""
+        return {
+            "id": f"trap-p{self.page_index}-{idx}",
+            "type": "trap_applied",
+            "severity": "info",
+            "page": self.page_index + 1,
+            "bbox": list(self.rect_pt),
+            "message": f"Trap applied: {self.direction} ({self.from_ink} → {self.to_ink})",
+            "data": {
+                "from_ink": self.from_ink,
+                "to_ink": self.to_ink,
+                "direction": str(self.direction),
+                "width_pt": self.width_pt,
+                "delta_e": self.delta_e,
+            },
+        }
+
 
 @dataclass(frozen=True)
 class TrapEngineResult:
