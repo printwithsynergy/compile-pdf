@@ -20,24 +20,24 @@ Four producers under one Python package, four FastAPI services in one Railway pr
 
 ## Status
 
-`compile-pdf 0.5.1` on PyPI, built against `codex-pdf 1.8.1`. All four producers (`rewrite`, `marks`, `impose`, `trap`) are live, the CJD orchestrator + lineage store are wired, and retention-for-training is opt-in per request. See [`CHANGELOG.md`](./CHANGELOG.md) for the release log and [`docs/`](./docs) for operator + integrator documentation.
+`compile-pdf 0.5.5` on PyPI, built against `codex-pdf 1.15.0+`. All four producers (`rewrite`, `marks`, `impose`, `trap`) are live, the CJD orchestrator + lineage store are wired, and retention-for-training is opt-in per request. See [`CHANGELOG.md`](./CHANGELOG.md) for the release log and [`docs/`](./docs) for operator + integrator documentation.
 
 ## Install
 
 ```bash
-pip install compile-pdf
+uv pip install compile-pdf
 ```
 
 For producers that need geometry primitives (marks, impose, trap):
 
 ```bash
-pip install 'compile-pdf[geom]'
+uv pip install 'compile-pdf[geom]'
 ```
 
 For the trap producer with Ghostscript engine fallback:
 
 ```bash
-pip install 'compile-pdf[geom,trap-gs]'
+uv pip install 'compile-pdf[geom,trap-gs]'
 ```
 
 ## CLI
@@ -64,7 +64,6 @@ for engine training. Off by default; engaged per-request.
 ```bash
 curl -X POST $COMPILE_BASE/v1/rewrite/apply \
   -H "X-Compile-Retain-For-Training: true" \
-  -H "X-Compile-Tenant: acme-co" \
   -H "Content-Type: application/json" \
   --data-binary @request.json
 ```
