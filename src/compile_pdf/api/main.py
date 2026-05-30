@@ -140,9 +140,7 @@ app.add_middleware(RequestIdMiddleware)
 
 
 @app.exception_handler(StarletteHTTPException)
-async def _problem_http_exception(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def _problem_http_exception(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """Map any HTTPException raised by a route into Problem Details."""
     body = build_problem(
         status=exc.status_code,
@@ -176,9 +174,7 @@ async def _problem_validation_exception(
 
 
 @app.exception_handler(Exception)
-async def _problem_unhandled_exception(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def _problem_unhandled_exception(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all — never leak a raw stack to the wire."""
     logger.exception("unhandled exception", path=request.url.path)
     body = problems.internal(
