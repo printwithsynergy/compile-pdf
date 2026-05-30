@@ -25,13 +25,10 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import structlog
-from codex_pdf.errors import PROBLEM_CONTENT_TYPE, build_problem, problems
-from fastapi import Depends, FastAPI, Request
-from fastapi.exceptions import RequestValidationError
+from fastapi import Depends, FastAPI
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel, Field
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.responses import JSONResponse, Response
+from starlette.responses import Response
 
 from compile_pdf.api.auth import authenticate
 from compile_pdf.api.middleware import INSTANCE_ID, RequestIdMiddleware
@@ -126,89 +123,6 @@ app = FastAPI(
 app.add_middleware(RequestIdMiddleware)
 
 
-# ---------------------------------------------------------------------------
-# RFC 7807 Problem Details exception handlers
-#
-# Phase D of the cross-stack architecture audit (lint-pdf/AUDIT.md
-# finding #13): every HTTP error response in the stack uses the same
-# `{ type, title, status, detail, instance, ... }` shape with
-# `Content-Type: application/problem+json`. The helpers live in
-# codex_pdf.errors (Python side) / @printwithsynergy/codex-client/
-# problem-details (TS side). compile-pdf was previously using FastAPI
-# defaults; these handlers replace that with the org-canonical shape.
-# ---------------------------------------------------------------------------
-
-
-@app.exception_handler(StarletteHTTPException)
-async def _problem_http_exception(request: Request, exc: StarletteHTTPException) -> JSONResponse:
-    """Map any HTTPException raised by a route into Problem Details."""
-    body = build_problem(
-        status=exc.status_code,
-        title=_title_for(exc.status_code),
-        detail=str(exc.detail) if exc.detail is not None else _title_for(exc.status_code),
-        instance=request.url.path,
-    )
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=body.model_dump(exclude_none=True),
-        media_type=PROBLEM_CONTENT_TYPE,
-        headers=getattr(exc, "headers", None) or {},
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def _problem_validation_exception(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
-    """Map Pydantic validation errors into Problem Details with `errors` extension."""
-    body = problems.unprocessable(
-        "Request body failed schema validation.",
-        instance=request.url.path,
-        extras={"errors": exc.errors()},
-    )
-    return JSONResponse(
-        status_code=422,
-        content=body.model_dump(exclude_none=True),
-        media_type=PROBLEM_CONTENT_TYPE,
-    )
-
-
-@app.exception_handler(Exception)
-async def _problem_unhandled_exception(request: Request, exc: Exception) -> JSONResponse:
-    """Catch-all — never leak a raw stack to the wire."""
-    logger.exception("unhandled exception", path=request.url.path)
-    body = problems.internal(
-        f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__,
-        instance=request.url.path,
-    )
-    return JSONResponse(
-        status_code=500,
-        content=body.model_dump(exclude_none=True),
-        media_type=PROBLEM_CONTENT_TYPE,
-    )
-
-
-def _title_for(status: int) -> str:
-    return {
-        400: "Bad Request",
-        401: "Unauthorized",
-        402: "Payment Required",
-        403: "Forbidden",
-        404: "Not Found",
-        409: "Conflict",
-        410: "Gone",
-        413: "Payload Too Large",
-        415: "Unsupported Media Type",
-        422: "Unprocessable Entity",
-        429: "Too Many Requests",
-        500: "Internal Server Error",
-        501: "Not Implemented",
-        502: "Bad Gateway",
-        503: "Service Unavailable",
-        504: "Gateway Timeout",
-    }.get(status, f"HTTP {status}")
-
-
 @app.get("/healthz", response_model=HealthResponse, include_in_schema=False)
 async def healthz_root() -> HealthResponse:
     return await healthz()
@@ -252,11 +166,6 @@ def _resolve_celery_workers() -> int:
     return detect_workers()
 
 
-@app.get("/v1/version", response_model=VersionResponse)
-async def version_endpoint() -> VersionResponse:
-    return VersionResponse(version=VERSION)
-
-
 @app.get("/readyz", include_in_schema=False)
 async def readyz_root() -> dict[str, str]:
     return await readyz()
@@ -266,10 +175,15 @@ async def readyz_root() -> dict[str, str]:
 async def readyz() -> dict[str, str]:
     """Readiness probe — Phase F of the cross-stack architecture audit
     (lint-pdf/AUDIT.md finding #15). Equivalent to /healthz today;
-    future hook point for downstream readiness (codex_pdf availability,
-    cache backend reachability, Ghostscript subprocess pool warmth).
+    future hook point for downstream-dep readiness (cache backend
+    reachability, celery worker pool, Ghostscript availability).
     """
     return {"status": "ready"}
+
+
+@app.get("/v1/version", response_model=VersionResponse)
+async def version_endpoint() -> VersionResponse:
+    return VersionResponse(version=VERSION)
 
 
 @app.get("/v1/contract", response_model=ContractResponse)
