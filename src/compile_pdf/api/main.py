@@ -257,6 +257,21 @@ async def version_endpoint() -> VersionResponse:
     return VersionResponse(version=VERSION)
 
 
+@app.get("/readyz", include_in_schema=False)
+async def readyz_root() -> dict[str, str]:
+    return await readyz()
+
+
+@app.get("/v1/readyz")
+async def readyz() -> dict[str, str]:
+    """Readiness probe — Phase F of the cross-stack architecture audit
+    (lint-pdf/AUDIT.md finding #15). Equivalent to /healthz today;
+    future hook point for downstream readiness (codex_pdf availability,
+    cache backend reachability, Ghostscript subprocess pool warmth).
+    """
+    return {"status": "ready"}
+
+
 @app.get("/v1/contract", response_model=ContractResponse)
 async def contract_endpoint() -> ContractResponse:
     """Per spec §6.2 — exposes the full contract surface so callers can
