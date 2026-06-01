@@ -105,9 +105,8 @@ def search(
     for entry in ref.entries:
         if library is not None and entry.library != library:
             continue
-        if needle is not None:
-            if needle not in normalize_pantone_name(entry.name):
-                continue
+        if needle is not None and needle not in normalize_pantone_name(entry.name):
+            continue
         matches.append(entry)
 
     total = len(matches)
