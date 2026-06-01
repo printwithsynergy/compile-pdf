@@ -390,6 +390,18 @@ def _maybe_mount_routers() -> None:
 _maybe_mount_routers()
 
 
+# Always-on metadata routers (independent of COMPILE_PRODUCER).
+# `spots` wraps codex-pdf's PANTONE catalogue; it's read-only and
+# every artwork-pdf editor instance needs it at boot regardless of
+# which producer this server runs.
+try:
+    from compile_pdf.spots.api import router as spots_router
+
+    app.include_router(spots_router, prefix="/v1/spots", tags=["spots"], dependencies=_AUTH_DEPS)
+except ImportError:
+    logger.debug("spots_router_not_yet_available")
+
+
 def _ignored() -> Any:
     """Reserved for future shape — keeps the symbol referenced by tests."""
     return None
