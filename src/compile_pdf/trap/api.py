@@ -88,8 +88,7 @@ class TrapPreviewResponse(BaseModel):
     trap_findings: list[dict[str, object]] = Field(
         default_factory=list,
         description=(
-            "Same shape as TrapApplyResponse.trap_findings — one "
-            "CodexFinding per trap operation."
+            "Same shape as TrapApplyResponse.trap_findings — one CodexFinding per trap operation."
         ),
     )
     schema_version: str = TRAP_SCHEMA_VERSION
