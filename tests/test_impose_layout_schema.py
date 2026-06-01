@@ -103,3 +103,39 @@ def test_json_schema_exports_with_required_fields() -> None:
     # Sheet/Cell are required (no defaults)
     assert "sheet" in schema["required"]
     assert "cell" in schema["required"]
+
+
+def test_mark_toggles_default_off_and_are_optional() -> None:
+    """``registration_marks`` and ``crop_marks`` are additive plumb fields:
+    omitting them keeps the schema's prior behaviour (no marks rendered)."""
+    plan = ImposePlan(
+        sheet=Sheet(width_pt=1782, height_pt=1224),
+        cell=Cell(width_pt=612, height_pt=792),
+    )
+    assert plan.registration_marks is False
+    assert plan.crop_marks is False
+
+
+def test_mark_toggles_round_trip_through_json() -> None:
+    """Once set, the toggles serialize / deserialize cleanly so editor
+    state and lineage records can carry operator intent end-to-end."""
+    original = ImposePlan(
+        sheet=Sheet(width_pt=1782, height_pt=1700),
+        cell=Cell(width_pt=612, height_pt=792),
+        registration_marks=True,
+        crop_marks=True,
+    )
+    restored = ImposePlan.model_validate_json(original.model_dump_json())
+    assert restored.registration_marks is True
+    assert restored.crop_marks is True
+
+
+def test_json_schema_advertises_mark_toggles() -> None:
+    schema = impose_plan_json_schema()
+    assert "registration_marks" in schema["properties"]
+    assert "crop_marks" in schema["properties"]
+    # Defaults must reach the JSON Schema so clients (the artwork-pdf
+    # editor's O1 impose builder, Wave 1 PR-15) can populate the
+    # control state from the contract without a separate lookup.
+    assert schema["properties"]["registration_marks"]["default"] is False
+    assert schema["properties"]["crop_marks"]["default"] is False
