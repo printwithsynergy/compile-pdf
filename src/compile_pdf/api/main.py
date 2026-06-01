@@ -402,6 +402,22 @@ except ImportError:
     logger.debug("spots_router_not_yet_available")
 
 
+# `separations` enumerates named inks in an input PDF. Always-on
+# (read-only metadata over the supplied PDF, no producer state).
+# Editor surface: artwork-pdf's C1 inks palette (Wave 2 PR-5).
+try:
+    from compile_pdf.separations.api import router as separations_router
+
+    app.include_router(
+        separations_router,
+        prefix="/v1/separations",
+        tags=["separations"],
+        dependencies=_AUTH_DEPS,
+    )
+except ImportError:
+    logger.debug("separations_router_not_yet_available")
+
+
 def _ignored() -> Any:
     """Reserved for future shape — keeps the symbol referenced by tests."""
     return None
