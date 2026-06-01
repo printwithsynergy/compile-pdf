@@ -25,9 +25,7 @@ def _spot_pdf(spot_names: list[str]) -> bytes:
     page = pdf.add_blank_page(page_size=(612, 792))
     cs_dict = pikepdf.Dictionary()
     for i, name in enumerate(spot_names):
-        cs_dict[f"/Cs{i}"] = pikepdf.Array(
-            [Name.Separation, Name(f"/{name}"), Name.DeviceCMYK]
-        )
+        cs_dict[f"/Cs{i}"] = pikepdf.Array([Name.Separation, Name(f"/{name}"), Name.DeviceCMYK])
     page.Resources = pikepdf.Dictionary({"/ColorSpace": cs_dict})
     buf = io.BytesIO()
     pdf.save(buf)
