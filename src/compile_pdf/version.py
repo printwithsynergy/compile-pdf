@@ -27,6 +27,11 @@ TRAP_SCHEMA_VERSION = "1.0.0"
 """Schema version for trap-policy documents, ``POST /v1/trap/apply``,
 and the trap-diff artifact shape."""
 
+SOFT_PROOF_SCHEMA_VERSION = "1.0.0"
+"""Schema version for the soft-proof producer (Wave 2 PR-G) — the
+``POST /v1/soft-proof/apply`` request / response envelope. Bumped
+when the wire format changes."""
+
 CJD_SCHEMA_VERSION = "1.0.0"
 """Schema version for the Compile Job Definition (CJD) format —
 the JSON/XML envelope that bundles a multi-producer job into one
@@ -48,6 +53,7 @@ PRODUCER_SCHEMA_VERSIONS: dict[str, str] = {
     "marks": MARKS_SCHEMA_VERSION,
     "impose": IMPOSE_SCHEMA_VERSION,
     "trap": TRAP_SCHEMA_VERSION,
+    "soft_proof": SOFT_PROOF_SCHEMA_VERSION,
     "cjd": CJD_SCHEMA_VERSION,
 }
 """Aggregate map exposed via ``GET /v1/contract.producer_schema_versions``."""

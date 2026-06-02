@@ -361,6 +361,18 @@ def _maybe_mount_routers() -> None:
             )
         except ImportError:
             logger.debug("trap_router_not_yet_available")
+    if active in {"soft_proof", "all"}:
+        try:
+            from compile_pdf.soft_proof.api import router as soft_proof_router
+
+            app.include_router(
+                soft_proof_router,
+                prefix="/v1/soft-proof",
+                tags=["soft-proof"],
+                dependencies=_AUTH_DEPS,
+            )
+        except ImportError:
+            logger.debug("soft_proof_router_not_yet_available")
     if active == "all":
         try:
             from compile_pdf.cjd.api import cjd_router, lineage_router
