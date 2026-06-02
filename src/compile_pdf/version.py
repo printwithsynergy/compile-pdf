@@ -32,6 +32,11 @@ SOFT_PROOF_SCHEMA_VERSION = "1.0.0"
 ``POST /v1/soft-proof/apply`` request / response envelope. Bumped
 when the wire format changes."""
 
+STREAM_SCHEMA_VERSION = "1.0.0"
+"""Schema version for the streaming wrapper (Wave 3 PR-6 O3) — the
+``POST /v1/stream/apply`` request envelope and the ``X-Compile-*``
+response header set. Bumped when either changes."""
+
 CJD_SCHEMA_VERSION = "1.0.0"
 """Schema version for the Compile Job Definition (CJD) format —
 the JSON/XML envelope that bundles a multi-producer job into one
@@ -54,6 +59,7 @@ PRODUCER_SCHEMA_VERSIONS: dict[str, str] = {
     "impose": IMPOSE_SCHEMA_VERSION,
     "trap": TRAP_SCHEMA_VERSION,
     "soft_proof": SOFT_PROOF_SCHEMA_VERSION,
+    "stream": STREAM_SCHEMA_VERSION,
     "cjd": CJD_SCHEMA_VERSION,
 }
 """Aggregate map exposed via ``GET /v1/contract.producer_schema_versions``."""

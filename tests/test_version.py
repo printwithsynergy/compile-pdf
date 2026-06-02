@@ -12,6 +12,7 @@ from compile_pdf.version import (
     PRODUCER_SCHEMA_VERSIONS,
     REWRITE_SCHEMA_VERSION,
     SOFT_PROOF_SCHEMA_VERSION,
+    STREAM_SCHEMA_VERSION,
     TRAP_SCHEMA_VERSION,
     VERSION,
 )
@@ -30,6 +31,7 @@ def test_per_producer_schema_versions_are_semver():
         ("impose", IMPOSE_SCHEMA_VERSION),
         ("trap", TRAP_SCHEMA_VERSION),
         ("soft_proof", SOFT_PROOF_SCHEMA_VERSION),
+        ("stream", STREAM_SCHEMA_VERSION),
         ("cjd", CJD_SCHEMA_VERSION),
         ("compile-document", COMPILE_DOCUMENT_SCHEMA_VERSION),
     ):
@@ -37,5 +39,5 @@ def test_per_producer_schema_versions_are_semver():
 
 
 def test_producer_schema_versions_map_complete():
-    expected = {"rewrite", "marks", "impose", "trap", "soft_proof", "cjd"}
+    expected = {"rewrite", "marks", "impose", "trap", "soft_proof", "stream", "cjd"}
     assert set(PRODUCER_SCHEMA_VERSIONS) == expected

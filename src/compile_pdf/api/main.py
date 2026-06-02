@@ -430,6 +430,23 @@ except ImportError:
     logger.debug("separations_router_not_yet_available")
 
 
+# `stream` (Wave 3 PR-6 O3) is a producer-agnostic streaming
+# wrapper around the existing PDF-producing producers. Always-on
+# so a single deploy can serve both JSON-shaped /apply and chunked
+# PDF streaming without flipping COMPILE_PRODUCER.
+try:
+    from compile_pdf.stream.api import router as stream_router
+
+    app.include_router(
+        stream_router,
+        prefix="/v1/stream",
+        tags=["stream"],
+        dependencies=_AUTH_DEPS,
+    )
+except ImportError:
+    logger.debug("stream_router_not_yet_available")
+
+
 def _ignored() -> Any:
     """Reserved for future shape — keeps the symbol referenced by tests."""
     return None
