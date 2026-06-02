@@ -109,6 +109,7 @@ def _register_producer_subcommands() -> None:
         ("compile_pdf.impose.cli", "impose"),
         ("compile_pdf.trap.cli", "trap"),
         ("compile_pdf.cjd.cli", "cjd"),
+        ("compile_pdf.stream.cli", "stream"),
     ):
         try:
             mod = __import__(module_name, fromlist=["register"])
