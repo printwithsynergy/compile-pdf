@@ -58,7 +58,7 @@ def _profile_drift_score(source_icc: bytes, destination_icc: bytes) -> float:
     """
     src_digest = hashlib.sha256(source_icc).digest()
     dst_digest = hashlib.sha256(destination_icc).digest()
-    diff = sum(abs(s - d) for s, d in zip(src_digest, dst_digest))
+    diff = sum(abs(s - d) for s, d in zip(src_digest, dst_digest, strict=True))
     # Normalize: max possible diff is 32 * 255; scale to a 0..50
     # range so callers see "small but non-zero" for typical
     # source/destination profile pairs.
