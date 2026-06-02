@@ -15,6 +15,7 @@ from compile_pdf.version import (
     STREAM_SCHEMA_VERSION,
     TRAP_SCHEMA_VERSION,
     VERSION,
+    WHITE_UNDERBASE_SCHEMA_VERSION,
 )
 
 SEMVER = re.compile(r"^\d+\.\d+\.\d+(?:[-+][\w.]+)?$")
@@ -32,6 +33,7 @@ def test_per_producer_schema_versions_are_semver():
         ("trap", TRAP_SCHEMA_VERSION),
         ("soft_proof", SOFT_PROOF_SCHEMA_VERSION),
         ("stream", STREAM_SCHEMA_VERSION),
+        ("white_underbase", WHITE_UNDERBASE_SCHEMA_VERSION),
         ("cjd", CJD_SCHEMA_VERSION),
         ("compile-document", COMPILE_DOCUMENT_SCHEMA_VERSION),
     ):
@@ -39,5 +41,14 @@ def test_per_producer_schema_versions_are_semver():
 
 
 def test_producer_schema_versions_map_complete():
-    expected = {"rewrite", "marks", "impose", "trap", "soft_proof", "stream", "cjd"}
+    expected = {
+        "rewrite",
+        "marks",
+        "impose",
+        "trap",
+        "soft_proof",
+        "stream",
+        "white_underbase",
+        "cjd",
+    }
     assert set(PRODUCER_SCHEMA_VERSIONS) == expected

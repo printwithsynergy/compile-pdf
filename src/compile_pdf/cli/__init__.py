@@ -110,6 +110,7 @@ def _register_producer_subcommands() -> None:
         ("compile_pdf.trap.cli", "trap"),
         ("compile_pdf.cjd.cli", "cjd"),
         ("compile_pdf.stream.cli", "stream"),
+        ("compile_pdf.white_underbase.cli", "white-underbase"),
     ):
         try:
             mod = __import__(module_name, fromlist=["register"])
