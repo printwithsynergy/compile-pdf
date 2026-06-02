@@ -373,6 +373,18 @@ def _maybe_mount_routers() -> None:
             )
         except ImportError:
             logger.debug("soft_proof_router_not_yet_available")
+    if active in {"white_underbase", "all"}:
+        try:
+            from compile_pdf.white_underbase.api import router as white_underbase_router
+
+            app.include_router(
+                white_underbase_router,
+                prefix="/v1/white-underbase",
+                tags=["white-underbase"],
+                dependencies=_AUTH_DEPS,
+            )
+        except ImportError:
+            logger.debug("white_underbase_router_not_yet_available")
     if active == "all":
         try:
             from compile_pdf.cjd.api import cjd_router, lineage_router
