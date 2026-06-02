@@ -107,9 +107,7 @@ def test_soft_proof_apply_rejects_invalid_base64(client: TestClient) -> None:
     assert "input_pdf_b64" in response.json()["detail"]
 
 
-def test_soft_proof_apply_rejects_empty_icc(
-    client: TestClient, small_pdf: bytes
-) -> None:
+def test_soft_proof_apply_rejects_empty_icc(client: TestClient, small_pdf: bytes) -> None:
     response = client.post(
         "/v1/soft-proof/apply",
         json={
