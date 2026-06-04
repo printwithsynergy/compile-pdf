@@ -17,10 +17,17 @@ external entity / billion-laughs attacks are rejected.
 
 from __future__ import annotations
 
-from xml.etree.ElementTree import Element, SubElement, tostring
+# Element and SubElement are write-only constructors; they never parse external
+# input and carry no XXE risk. tostring is likewise output-only. All parsing
+# goes through defusedxml.ElementTree below (see parse_cjd_xml).
+from xml.etree.ElementTree import (  # nosemgrep: python.lang.security.use-defused-xml.use-defused-xml -- write-only constructors; no external-entity parsing path
+    Element,
+    SubElement,
+)
 
 import defusedxml.ElementTree as defused_etree  # noqa: N813
 from defusedxml.common import DefusedXmlException
+from defusedxml.ElementTree import tostring  # output serialiser; safe (no parse)
 
 from compile_pdf.cjd.schema import CjdJob
 

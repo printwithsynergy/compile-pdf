@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -49,3 +51,33 @@ jobs:
           name: consume-surface-audit
           path: reports/audit/consume_surface.json
           if-no-files-found: ignore
+
+  security:
+    name: security scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.4.20"
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install project (with dev extras)
+        run: uv sync --extra dev
+
+      - name: Semgrep (security-audit + secrets)
+        run: |
+          pip install semgrep --quiet
+          semgrep scan --error --config p/security-audit --config p/secrets --config p/python src
+
+      - name: Bandit (medium severity + confidence)
+        run: |
+          uv run pip install bandit --quiet
+          uv run bandit -r src --severity-level medium --confidence-level medium

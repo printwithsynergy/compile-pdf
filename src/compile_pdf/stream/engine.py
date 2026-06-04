@@ -231,8 +231,7 @@ def dispatch_stream(producer: ProducerName, payload: dict[str, object]) -> Strea
     """
     if producer not in SUPPORTED_PRODUCERS:
         raise StreamEngineError(
-            f"producer '{producer}' not supported; pick one of: "
-            f"{', '.join(SUPPORTED_PRODUCERS)}"
+            f"producer '{producer}' not supported; pick one of: {', '.join(SUPPORTED_PRODUCERS)}"
         )
 
     dispatcher = _DISPATCH[producer]

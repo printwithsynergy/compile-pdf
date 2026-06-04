@@ -67,9 +67,7 @@ def _count_pages(input_bytes: bytes) -> int:
         raise WhiteUnderbaseEngineError(f"input PDF is malformed: {exc}") from exc
 
 
-def apply_white_underbase(
-    input_bytes: bytes, policy: WhiteUnderbasePolicy
-) -> WhiteUnderbaseResult:
+def apply_white_underbase(input_bytes: bytes, policy: WhiteUnderbasePolicy) -> WhiteUnderbaseResult:
     """Generate a white / underbase plate per ``policy``.
 
     Raises :class:`WhiteUnderbaseEngineError` if the input PDF is
@@ -94,8 +92,7 @@ def apply_white_underbase(
     invalid = [idx for idx in selected_pages if idx < 0 or idx >= total_pages]
     if invalid:
         raise WhiteUnderbaseEngineError(
-            f"page_indices reference out-of-range pages: {invalid} "
-            f"(input has {total_pages} pages)"
+            f"page_indices reference out-of-range pages: {invalid} (input has {total_pages} pages)"
         )
 
     summary = WhiteUnderbaseSummary(

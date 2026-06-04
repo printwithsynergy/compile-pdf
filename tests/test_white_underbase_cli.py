@@ -10,9 +10,7 @@ from click.testing import CliRunner
 from compile_pdf.cli import cli
 
 
-def test_cli_writes_output_with_default_policy(
-    tmp_path: Path, simple_pdf: bytes
-) -> None:
+def test_cli_writes_output_with_default_policy(tmp_path: Path, simple_pdf: bytes) -> None:
     input_path = tmp_path / "in.pdf"
     output_path = tmp_path / "out.pdf"
     input_path.write_bytes(simple_pdf)
@@ -34,9 +32,7 @@ def test_cli_accepts_policy_file(tmp_path: Path, simple_pdf: bytes) -> None:
     output_path = tmp_path / "out.pdf"
     policy_path = tmp_path / "policy.json"
     input_path.write_bytes(simple_pdf)
-    policy_path.write_text(
-        json.dumps({"separation_name": "Varnish", "plate_use": "varnish"})
-    )
+    policy_path.write_text(json.dumps({"separation_name": "Varnish", "plate_use": "varnish"}))
 
     runner = CliRunner()
     result = runner.invoke(
