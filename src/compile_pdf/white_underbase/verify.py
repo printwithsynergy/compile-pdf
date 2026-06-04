@@ -63,8 +63,6 @@ def verify_white_underbase(
         return WhiteUnderbaseVerifyResult(ok=False, failures=failures)
 
     if in_pages != out_pages:
-        failures.append(
-            f"output page count {out_pages} differs from input {in_pages}"
-        )
+        failures.append(f"output page count {out_pages} differs from input {in_pages}")
 
     return WhiteUnderbaseVerifyResult(ok=not failures, failures=failures)

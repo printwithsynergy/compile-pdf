@@ -286,9 +286,10 @@ wheels = [
 
 [[package]]
 name = "codex-pdf"
-version = "1.19.0"
+version = "1.21.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "defusedxml" },
     { name = "fastapi" },
     { name = "gunicorn" },
     { name = "httpx" },
@@ -300,9 +301,9 @@ dependencies = [
     { name = "structlog" },
     { name = "uvicorn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f3/c2/15db44ab3353b525b2c4f1f9b5507b74279159a72114ce04cd4566560ac1/codex_pdf-1.19.0.tar.gz", hash = "sha256:414c5ac7e1cc31042d8f53acc3727b3809f3eaf97b1b80a4b097bbeaff8bafad", size = 846908, upload-time = "2026-05-20T18:26:22.056Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/42/c9dbb7c8ac21ffbe7c31e145b95ca0c31e8f202f977cc0ae39a1b037dee9/codex_pdf-1.21.2.tar.gz", hash = "sha256:c856acc3f1b259ea66d0a9c5d095351bfafb415022fb20c7f7338af2bf563e41", size = 856956, upload-time = "2026-06-04T01:05:31.049Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5e/8f/e6be1957c32a9145dc21eb0f9c2d9d445bddf5a7130854f42f0c4e2f01e0/codex_pdf-1.19.0-py3-none-any.whl", hash = "sha256:38d597dcf0849fe61c83459cfe41735e656446b639fe23170634fffda7c6fa7a", size = 667706, upload-time = "2026-05-20T18:26:20.386Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/27/9de1bb12f9792ac2d90a262aa4fab41583dfcbe103afc542476da74e9ab5/codex_pdf-1.21.2-py3-none-any.whl", hash = "sha256:496a71ea1f63082da729593fb4a601d03a5e53e478453402039adc1d5a4f8699", size = 681035, upload-time = "2026-06-04T01:05:29.612Z" },
 ]
 
 [[package]]
@@ -316,7 +317,7 @@ wheels = [
 
 [[package]]
 name = "compile-pdf"
-version = "0.5.5"
+version = "0.5.6"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
@@ -369,7 +370,7 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.34" },
     { name = "celery", extras = ["redis"], specifier = ">=5.3" },
     { name = "click", specifier = ">=8.1" },
-    { name = "codex-pdf", specifier = ">=1.15.0,<2.0" },
+    { name = "codex-pdf", specifier = ">=1.21.1,<2.0" },
     { name = "defusedxml", specifier = ">=0.7.1" },
     { name = "fastapi", specifier = ">=0.110" },
     { name = "httpx", specifier = ">=0.27" },

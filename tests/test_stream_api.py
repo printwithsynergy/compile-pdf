@@ -74,10 +74,7 @@ def test_stream_byte_parity_with_json_apply(client: TestClient, simple_pdf: byte
     json_bytes = base64.b64decode(json_response.json()["output_pdf_b64"])
     assert stream_response.content == json_bytes
     # Cache keys must also match — wrapper computes the same key.
-    assert (
-        stream_response.headers["x-compile-cache-key"]
-        == json_response.json()["cache_key"]
-    )
+    assert stream_response.headers["x-compile-cache-key"] == json_response.json()["cache_key"]
 
 
 def test_stream_unknown_producer_returns_400(client: TestClient, simple_pdf: bytes) -> None:

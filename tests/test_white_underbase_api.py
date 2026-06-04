@@ -98,9 +98,7 @@ def test_apply_rejects_non_pdf_input(client: TestClient) -> None:
     assert "engine rejected" in response.text
 
 
-def test_apply_rejects_out_of_range_page_indices(
-    client: TestClient, three_page_pdf: bytes
-) -> None:
+def test_apply_rejects_out_of_range_page_indices(client: TestClient, three_page_pdf: bytes) -> None:
     response = client.post(
         "/v1/white-underbase/apply",
         json={

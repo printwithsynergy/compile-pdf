@@ -50,9 +50,7 @@ def test_verify_rejects_non_pdf_output(simple_pdf: bytes) -> None:
     assert any("%PDF" in f for f in check.failures)
 
 
-def test_verify_rejects_page_count_mismatch(
-    simple_pdf: bytes, three_page_pdf: bytes
-) -> None:
+def test_verify_rejects_page_count_mismatch(simple_pdf: bytes, three_page_pdf: bytes) -> None:
     """If the output's page count differs from the input, verify must fail."""
     bad = WhiteUnderbaseResult(
         output_bytes=three_page_pdf,

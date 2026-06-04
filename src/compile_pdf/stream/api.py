@@ -65,7 +65,9 @@ async def stream_apply(payload: StreamApplyRequest) -> StreamingResponse:
         # with "rejected" for the latter case so we can route
         # without a second exception type.
         if "rejected" in message:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message) from exc
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message
+            ) from exc
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message) from exc
 
     verify = verify_stream_output(result.output_bytes)
