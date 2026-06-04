@@ -74,7 +74,7 @@ jobs:
 
       - name: Semgrep (security-audit + secrets)
         run: |
-          pip install semgrep --quiet
+          pip install semgrep==1.165.0 --quiet
           semgrep scan --error --config p/security-audit --config p/secrets --config p/python src
 
       - name: Bandit (medium severity + confidence)
