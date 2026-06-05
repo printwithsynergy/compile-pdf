@@ -232,9 +232,7 @@ def test_explicit_placements_beyond_sheet_rejected(two_page_content_pdf: bytes) 
         sheet=Sheet(width_pt=612, height_pt=792),
         cell=Cell(width_pt=612, height_pt=792),
         explicit_placements=[
-            ExplicitPlacement(
-                source_ref="oversize", x0_pt=0, y0_pt=0, x1_pt=9999, y1_pt=792
-            ),
+            ExplicitPlacement(source_ref="oversize", x0_pt=0, y0_pt=0, x1_pt=9999, y1_pt=792),
         ],
     )
     with pytest.raises(ImposePlanError, match="beyond the sheet"):
