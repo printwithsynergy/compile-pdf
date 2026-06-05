@@ -20,7 +20,7 @@ Four producers under one Python package, four FastAPI services in one Railway pr
 
 ## Status
 
-`compile-pdf 0.5.5` on PyPI, built against `codex-pdf 1.15.0+`. All four producers (`rewrite`, `marks`, `impose`, `trap`) are live, the CJD orchestrator + lineage store are wired, and retention-for-training is opt-in per request. See [`CHANGELOG.md`](./CHANGELOG.md) for the release log and [`docs/`](./docs) for operator + integrator documentation.
+`compile-pdf 0.5.5` on PyPI, built against `codex-pdf 1.21.1+`. All four producers (`rewrite`, `marks`, `impose`, `trap`) are live, the CJD orchestrator + lineage store are wired, and retention-for-training is opt-in per request. See [`CHANGELOG.md`](./CHANGELOG.md) for the release log and [`docs/`](./docs) for operator + integrator documentation.
 
 ## Install
 
