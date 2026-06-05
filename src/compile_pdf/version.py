@@ -11,7 +11,7 @@ without forcing marks/impose/trap to also bump.
 
 from __future__ import annotations
 
-VERSION = "0.5.6"
+VERSION = "0.6.0"
 """Compile-PDF package version (semver). Bumped on every release."""
 
 REWRITE_SCHEMA_VERSION = "1.0.0"
@@ -20,8 +20,13 @@ REWRITE_SCHEMA_VERSION = "1.0.0"
 MARKS_SCHEMA_VERSION = "1.0.0"
 """Schema version for marks-template documents and ``POST /v1/marks/apply`` response shape."""
 
-IMPOSE_SCHEMA_VERSION = "1.0.0"
-"""Schema version for impose-plan documents and ``POST /v1/impose/apply`` response shape."""
+IMPOSE_SCHEMA_VERSION = "1.1.0"
+"""Schema version for impose-plan documents and ``POST /v1/impose/apply`` response shape.
+
+1.1.0 (additive): adds the optional ``explicit_placements`` list +
+``stagger_mode`` field so sift-pdf's stagger / gang / nest solver output
+can be honored by the writer. Backward-compatible — grid plans validate
+and render byte-identically to 1.0.0."""
 
 TRAP_SCHEMA_VERSION = "1.0.0"
 """Schema version for trap-policy documents, ``POST /v1/trap/apply``,
