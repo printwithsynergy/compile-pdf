@@ -239,6 +239,18 @@ def test_explicit_placements_beyond_sheet_rejected(two_page_content_pdf: bytes) 
         apply_plan(two_page_content_pdf, plan)
 
 
+def test_explicit_placements_below_origin_rejected(two_page_content_pdf: bytes) -> None:
+    plan = ImposePlan(
+        sheet=Sheet(width_pt=612, height_pt=792),
+        cell=Cell(width_pt=612, height_pt=792),
+        explicit_placements=[
+            ExplicitPlacement(source_ref="below-origin", x0_pt=-50, y0_pt=0, x1_pt=562, y1_pt=792),
+        ],
+    )
+    with pytest.raises(ImposePlanError, match="beyond the sheet"):
+        apply_plan(two_page_content_pdf, plan)
+
+
 def test_empty_explicit_placements_rejected(two_page_content_pdf: bytes) -> None:
     plan = ImposePlan(
         sheet=Sheet(width_pt=612, height_pt=792),
