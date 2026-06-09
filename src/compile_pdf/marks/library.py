@@ -473,7 +473,14 @@ def render_step_repeat(mark: StepRepeatMark, geom: PageGeometry) -> list[Rendere
         body_parts.append(_line(t.x0 - off, y + dy_left, t.x0 - off - ln, y + dy_left))
         body_parts.append(_line(t.x1 + off, y + dy_right, t.x1 + off + ln, y + dy_right))
 
-    extent = Box(t.x0 - off - ln, t.y0 - off - ln, t.x1 + off + ln, t.y1 + off + ln)
+    # Extent must cover the stagger-shifted ticks too: top ticks shift +x by
+    # dx_top and right ticks shift +y by dy_right, which can exceed off + ln.
+    extent = Box(
+        t.x0 - off - ln,
+        t.y0 - off - ln,
+        max(t.x1 + off + ln, t.x1 + dx_top),
+        max(t.y1 + off + ln, t.y1 + dy_right),
+    )
     return [RenderedMark(stream=_wrap("".join(body_parts), w), extent_hint=extent)]
 
 
