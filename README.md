@@ -1,6 +1,6 @@
 # compile-pdf
 
-CompilePDF — the only writer in the Print With Synergy stack.
+CompilePDF — programmatic PDF assembly: a deterministic API build step for rewriting and generating print-ready PDFs.
 
 Four producers under one Python package, four FastAPI services in one Railway project, one Redis-backed Celery broker, one S3-compatible object bucket.
 
@@ -13,14 +13,14 @@ Four producers under one Python package, four FastAPI services in one Railway pr
 
 **Architectural invariants** (mechanically enforced by `scripts/consume_surface_audit.py`):
 
-- CompilePDF is the *only* writer in the stack.
+- CompilePDF is the writer — it produces PDF bytes and never re-extracts them.
 - [codex-pdf](https://github.com/printwithsynergy/codex-pdf) stays read-only — its `produce_surface_audit.py` enforces.
 - Every producer consumes Codex primitives through published surfaces; re-implementation is forbidden.
 - Every producer emits deterministic bytes; same input + same plan + same engine fingerprint → same SHA-256 output.
 
 ## Status
 
-`compile-pdf 0.5.5` on PyPI, built against `codex-pdf 1.21.1+`. All four producers (`rewrite`, `marks`, `impose`, `trap`) are live, the CJD orchestrator + lineage store are wired, and retention-for-training is opt-in per request. See [`CHANGELOG.md`](./CHANGELOG.md) for the release log and [`docs/`](./docs) for operator + integrator documentation.
+`compile-pdf 0.5.5` on PyPI, built against `codex-pdf 1.21.1+`. All four producers (`rewrite`, `marks`, `impose`, `trap`) are live, the CJD batch runner + lineage store are wired, and retention-for-training is opt-in per request. See [`CHANGELOG.md`](./CHANGELOG.md) for the release log and [`docs/`](./docs) for operator + integrator documentation.
 
 ## Install
 
