@@ -218,6 +218,29 @@ class TileStitchMark(_MarkBase):
     line_width_pt: PositiveFloat = Field(default=0.25)
 
 
+class StepRepeatMark(_MarkBase):
+    """Step-and-repeat (SNR) cut marks for a ganged sheet — cut ticks at the
+    boundaries between repeated cells, on all four sides of the trim.
+
+    ``rows`` x ``cols`` cells tile the trim box, separated by ``gutter_pt``.
+    ``stagger`` follows a *half-drop* (alternating columns dropped by half a
+    cell) or *brick* (alternating rows shifted right by half a cell)
+    step-and-repeat, so the edge cut marks land where the staggered cells
+    actually cut: brick shifts the top-edge ticks by half a cell (the top row's
+    offset); half-drop shifts the right-edge ticks (the last column's drop).
+    Cell tiling is plain arithmetic on the trim ``Box`` — no codex hop needed.
+    """
+
+    type: Literal["step_repeat"]
+    rows: PositiveInt = Field(default=1)
+    cols: PositiveInt = Field(default=1)
+    gutter_pt: NonNegativeFloat = Field(default=0.0)
+    stagger: Literal["none", "half_drop", "brick"] = Field(default="none")
+    tick_length_pt: PositiveFloat = Field(default=9.0)
+    offset_pt: NonNegativeFloat = Field(default=3.0)
+    line_width_pt: PositiveFloat = Field(default=0.25)
+
+
 class CustomShape(_MarkBase):
     """Operator-defined polygon at an anchor. ``points`` are in points,
     relative to the anchor origin (anchor is treated as (0, 0)). A
@@ -266,6 +289,7 @@ Mark = Annotated[
     | CutMark
     | InkKeyBar
     | TileStitchMark
+    | StepRepeatMark
     | CustomShape
     | ExternalMark,
     Field(discriminator="type"),
