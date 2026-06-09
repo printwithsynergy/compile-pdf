@@ -37,6 +37,7 @@ from compile_pdf.marks.template_schema import (
     RegisterMark,
     SingleAnchor,
     SlugText,
+    StepRepeatMark,
     TileStitchMark,
 )
 
@@ -429,6 +430,53 @@ def render_tile_stitch(mark: TileStitchMark, geom: PageGeometry) -> list[Rendere
     return [RenderedMark(stream=_wrap("".join(body_parts), mark.line_width_pt), extent_hint=extent)]
 
 
+def render_step_repeat(mark: StepRepeatMark, geom: PageGeometry) -> list[RenderedMark]:
+    """Cut ticks at every cell boundary of a step-and-repeat grid on the trim,
+    on all four sides, following the configured stagger.
+
+    Cells tile the trim box (``cols`` x ``rows``, separated by ``gutter_pt``);
+    ticks land at each cell's left/right edge (vertical cuts, ticked above the
+    top and below the bottom trim) and top/bottom edge (horizontal cuts, ticked
+    left and right). Coincident edges collapse when ``gutter_pt == 0``.
+
+    Stagger shifts the edge that rides the staggered cells: ``brick`` offsets
+    the top-edge ticks by half a cell when the top row is shifted; ``half_drop``
+    offsets the right-edge ticks by half a cell when the last column is dropped.
+    The bottom edge (row 0) and left edge (column 0) are never shifted, so they
+    stay registered to the untranslated origin.
+    """
+    t = geom.trim
+    cols, rows = mark.cols, mark.rows
+    g = mark.gutter_pt
+    cw = (t.width - (cols - 1) * g) / cols
+    ch = (t.height - (rows - 1) * g) / rows
+
+    # Cut-edge coordinates: every cell's two edges; coincident edges dedup.
+    xs = sorted(
+        {t.x0 + i * (cw + g) for i in range(cols)} | {t.x0 + i * (cw + g) + cw for i in range(cols)}
+    )
+    ys = sorted(
+        {t.y0 + j * (ch + g) for j in range(rows)} | {t.y0 + j * (ch + g) + ch for j in range(rows)}
+    )
+
+    off, ln, w = mark.offset_pt, mark.tick_length_pt, mark.line_width_pt
+    dx_top = cw / 2 if mark.stagger == "brick" and (rows - 1) % 2 == 1 else 0.0
+    dx_bottom = 0.0  # bottom row (index 0) is never shifted in a brick layout
+    dy_right = ch / 2 if mark.stagger == "half_drop" and (cols - 1) % 2 == 1 else 0.0
+    dy_left = 0.0  # first column (index 0) is never dropped in a half-drop layout
+
+    body_parts: list[str] = []
+    for x in xs:
+        body_parts.append(_line(x + dx_top, t.y1 + off, x + dx_top, t.y1 + off + ln))
+        body_parts.append(_line(x + dx_bottom, t.y0 - off, x + dx_bottom, t.y0 - off - ln))
+    for y in ys:
+        body_parts.append(_line(t.x0 - off, y + dy_left, t.x0 - off - ln, y + dy_left))
+        body_parts.append(_line(t.x1 + off, y + dy_right, t.x1 + off + ln, y + dy_right))
+
+    extent = Box(t.x0 - off - ln, t.y0 - off - ln, t.x1 + off + ln, t.y1 + off + ln)
+    return [RenderedMark(stream=_wrap("".join(body_parts), w), extent_hint=extent)]
+
+
 def render_custom(mark: CustomShape, geom: PageGeometry) -> list[RenderedMark]:
     """Polyline / polygon at the chosen anchor."""
     ax, ay = geom.anchor_xy(mark.anchor)
@@ -489,6 +537,8 @@ def render(mark: Mark, geom: PageGeometry) -> list[RenderedMark]:
         return render_ink_key_bar(mark, geom)
     if isinstance(mark, TileStitchMark):
         return render_tile_stitch(mark, geom)
+    if isinstance(mark, StepRepeatMark):
+        return render_step_repeat(mark, geom)
     if isinstance(mark, CustomShape):
         return render_custom(mark, geom)
     if isinstance(mark, ExternalMark):
@@ -574,5 +624,6 @@ __all__ = [
     "render_proof_slug",
     "render_register",
     "render_slug_text",
+    "render_step_repeat",
     "render_tile_stitch",
 ]

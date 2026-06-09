@@ -11,14 +11,18 @@ without forcing marks/impose/trap to also bump.
 
 from __future__ import annotations
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 """Compile-PDF package version (semver). Bumped on every release."""
 
 REWRITE_SCHEMA_VERSION = "1.0.0"
 """Schema version for rewrite-plan documents and ``POST /v1/rewrite/apply`` response shape."""
 
-MARKS_SCHEMA_VERSION = "1.0.0"
-"""Schema version for marks-template documents and ``POST /v1/marks/apply`` response shape."""
+MARKS_SCHEMA_VERSION = "1.1.0"
+"""Schema version for marks-template documents and ``POST /v1/marks/apply`` response shape.
+
+1.1.0 (additive): adds the ``step_repeat`` mark type — stagger-aware
+step-and-repeat (SNR) cut marks. Backward-compatible — templates without a
+``step_repeat`` mark validate and render byte-identically to 1.0.0."""
 
 IMPOSE_SCHEMA_VERSION = "1.1.0"
 """Schema version for impose-plan documents and ``POST /v1/impose/apply`` response shape.
