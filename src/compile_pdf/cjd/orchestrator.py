@@ -18,6 +18,9 @@ import hashlib
 import io
 from dataclasses import dataclass
 
+from compile_pdf_core.lineage.store import LineageStep, LineageStore, default_store
+from compile_pdf_core.retention import persist_if_opted_in
+
 from compile_pdf.cache import compute_cache_key, hash_canonical_plan
 from compile_pdf.cjd.schema import (
     PRODUCER_ORDER,
@@ -29,9 +32,7 @@ from compile_pdf.cjd.schema import (
     CjdTrapStep,
 )
 from compile_pdf.impose.engine import apply_plan as apply_impose
-from compile_pdf.lineage.store import LineageStep, LineageStore, default_store
 from compile_pdf.marks.engine import apply_template as apply_marks
-from compile_pdf.retention import persist_if_opted_in
 from compile_pdf.rewrite.engine import apply_plan as apply_rewrite
 from compile_pdf.trap.engine import apply_policy as apply_trap
 from compile_pdf.version import CODEX_DOCUMENT_SCHEMA_VERSION_PIN

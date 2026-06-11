@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import pytest
-
-from compile_pdf import queue_status
+from compile_pdf_core import queue_status
 
 
 def test_default_backend_returns_zero(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -10,15 +10,15 @@ import base64
 import hashlib
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request, status
-from pydantic import BaseModel, Field
-
-from compile_pdf.cache import compute_cache_key, hash_canonical_plan
-from compile_pdf.retention import (
+from compile_pdf_core.retention import (
     parse_consent,
     persist_if_opted_in,
     resolve_tenant,
 )
+from fastapi import APIRouter, HTTPException, Request, status
+from pydantic import BaseModel, Field
+
+from compile_pdf.cache import compute_cache_key, hash_canonical_plan
 from compile_pdf.trap.engine import TrapEngineError, apply_policy
 from compile_pdf.trap.policy_schema import TrapPolicy
 from compile_pdf.trap.verify import verify_trap

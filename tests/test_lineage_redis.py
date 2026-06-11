@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 
 import pytest
-
-from compile_pdf.lineage.store import (
+from compile_pdf_core.lineage.store import (
     LineageNotFoundError,
     LineageStep,
     RedisLineageStore,

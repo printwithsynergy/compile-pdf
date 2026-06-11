@@ -1,4 +1,4 @@
-"""Auth mode tests — covers ``compile_pdf.api.auth``'s five modes
+"""Auth mode tests — covers ``compile_pdf_core.api.auth``'s five modes
 and the COMPILE_AUTH_MODE env-var parser.
 """
 
@@ -7,10 +7,9 @@ from __future__ import annotations
 import base64
 
 import pytest
+from compile_pdf_core.api import auth
 from fastapi import HTTPException
 from starlette.requests import Request
-
-from compile_pdf.api import auth
 
 
 def _request(headers: dict[str, str]) -> Request:

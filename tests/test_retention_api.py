@@ -5,10 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
+from compile_pdf_core.retention import store as retention_store
 from fastapi.testclient import TestClient
 
 from compile_pdf.api.main import app
-from compile_pdf.retention import store as retention_store
 
 
 class _FakeS3:

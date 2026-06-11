@@ -6,8 +6,7 @@ import json
 from typing import Any
 
 import pytest
-
-from compile_pdf.retention.store import (
+from compile_pdf_core.retention.store import (
     RetentionBackendError,
     RetentionStore,
     delete_by_sha256,

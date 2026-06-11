@@ -26,6 +26,9 @@ from typing import Any
 
 import structlog
 from codex_pdf.errors import PROBLEM_CONTENT_TYPE, build_problem, problems
+from compile_pdf_core.api.auth import authenticate
+from compile_pdf_core.api.middleware import INSTANCE_ID, RequestIdMiddleware
+from compile_pdf_core.queue_status import resolve_queue_depth
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
@@ -33,9 +36,6 @@ from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import JSONResponse, Response
 
-from compile_pdf.api.auth import authenticate
-from compile_pdf.api.middleware import INSTANCE_ID, RequestIdMiddleware
-from compile_pdf.queue_status import resolve_queue_depth
 from compile_pdf.version import (
     CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
     COMPILE_DOCUMENT_SCHEMA_VERSION,
@@ -399,7 +399,7 @@ def _maybe_mount_routers() -> None:
         except ImportError:
             logger.debug("cjd_router_not_yet_available")
         try:
-            from compile_pdf.retention.api import router as retention_router
+            from compile_pdf_core.retention.api import router as retention_router
 
             app.include_router(
                 retention_router,

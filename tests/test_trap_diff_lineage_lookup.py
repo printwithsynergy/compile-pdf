@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+from compile_pdf_core.lineage.store import reset_default_store
 
 from compile_pdf.cli import cli
-from compile_pdf.lineage.store import reset_default_store
 
 
 @pytest.fixture(autouse=True)
