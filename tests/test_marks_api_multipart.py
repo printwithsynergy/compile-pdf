@@ -153,6 +153,30 @@ def test_multipart_handles_inline_marks_only(printer_pdf: bytes) -> None:
     assert body["marks_applied"] == 4  # broadcast trim_corners → 4 stamps
 
 
+def test_multipart_rejects_path_traversal_filename(printer_pdf: bytes) -> None:
+    # A multipart filename is attacker-controlled; one that escapes the
+    # temp dir must be rejected (400), not written to disk.
+    client = TestClient(app)
+    # The template references the traversal name too, so it passes the
+    # "external provided" check and reaches the write loop — where the
+    # guard must reject it (400) rather than write outside the temp dir.
+    traversal = "../../evil.pdf"
+    template = {
+        "marks": [
+            {"type": "external", "file": traversal, "anchor": "trim_center"},
+        ]
+    }
+    response = client.post(
+        "/v1/marks/apply-multipart",
+        files=[
+            ("input_pdf", ("in.pdf", printer_pdf, "application/pdf")),
+            ("externals", (traversal, _make_external_pdf(), "application/pdf")),
+        ],
+        data={"template": json.dumps(template)},
+    )
+    assert response.status_code == 400, response.text
+
+
 def test_contract_endpoint_lists_apply_multipart() -> None:
     client = TestClient(app)
     response = client.get("/v1/contract")

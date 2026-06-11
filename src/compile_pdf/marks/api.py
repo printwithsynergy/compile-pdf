@@ -263,7 +263,15 @@ async def marks_apply_multipart(
         for uploaded in externals:
             if not uploaded.filename:
                 continue
-            (external_root / uploaded.filename).write_bytes(await uploaded.read())
+            # Path-traversal guard: a multipart part's filename is fully
+            # attacker-controlled, so e.g. "../../etc/cron.d/x" would escape
+            # the temp dir on write. Externals are referenced by a bare name
+            # in the template, so reject anything that isn't already a plain
+            # in-directory filename (no separators, not "." / "..").
+            safe_name = Path(uploaded.filename).name
+            if not safe_name or safe_name in {".", ".."} or safe_name != uploaded.filename:
+                raise HTTPException(status_code=400, detail="invalid external filename")
+            (external_root / safe_name).write_bytes(await uploaded.read())
 
         try:
             result = apply_template(input_bytes, parsed, external_root=external_root)

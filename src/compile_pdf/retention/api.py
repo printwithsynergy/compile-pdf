@@ -23,7 +23,11 @@ router = APIRouter()
 class RetentionDeleteRequest(BaseModel):
     model_config = {"extra": "forbid"}
 
-    sha256: str = Field(min_length=1, max_length=128)
+    # Must be a full 64-char hex sha256. The store matches keys by the
+    # substring ``/{sha256}/``, so a short/partial value (the old
+    # min_length=1 allowed it) would over-match and erase unrelated
+    # objects under the configured prefix. Pin the exact hex shape.
+    sha256: str = Field(min_length=64, max_length=64, pattern=r"^[0-9a-fA-F]{64}$")
 
 
 class RetentionDeleteResponse(BaseModel):
