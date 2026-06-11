@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Integration tests for the /v1/separations/* endpoints.
 
-The router wraps :mod:`compile_pdf.separations.extract`; tests
+The router wraps :mod:`compile_pdf_separations.extract`; tests
 assert request validation, the wire shape, and a couple of
 behavioural cases against fixture PDFs synthesised in-test.
 """

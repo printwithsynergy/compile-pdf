@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import base64
 
-from compile_pdf.stream.engine import dispatch_stream
+from compile_pdf_stream.engine import dispatch_stream
 
 
 def _b64(data: bytes) -> str:

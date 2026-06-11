@@ -11,6 +11,14 @@ without forcing marks/impose/trap to also bump.
 
 from __future__ import annotations
 
+# soft_proof / stream / white_underbase schema versions are owned by
+# their satellite packages (each producer ships its own version.py);
+# re-exported here so the /v1/contract aggregate + existing import
+# sites keep a single source of truth.
+from compile_pdf_soft_proof.version import SOFT_PROOF_SCHEMA_VERSION
+from compile_pdf_stream.version import STREAM_SCHEMA_VERSION
+from compile_pdf_white_underbase.version import WHITE_UNDERBASE_SCHEMA_VERSION
+
 VERSION = "0.7.0"
 """Compile-PDF package version (semver). Bumped on every release."""
 
@@ -35,22 +43,6 @@ and render byte-identically to 1.0.0."""
 TRAP_SCHEMA_VERSION = "1.0.0"
 """Schema version for trap-policy documents, ``POST /v1/trap/apply``,
 and the trap-diff artifact shape."""
-
-SOFT_PROOF_SCHEMA_VERSION = "1.0.0"
-"""Schema version for the soft-proof producer (Wave 2 PR-G) — the
-``POST /v1/soft-proof/apply`` request / response envelope. Bumped
-when the wire format changes."""
-
-STREAM_SCHEMA_VERSION = "1.0.0"
-"""Schema version for the streaming wrapper (Wave 3 PR-6 O3) — the
-``POST /v1/stream/apply`` request envelope and the ``X-Compile-*``
-response header set. Bumped when either changes."""
-
-WHITE_UNDERBASE_SCHEMA_VERSION = "1.0.0"
-"""Schema version for the white / underbase producer (Wave 3 PR-7
-C2) — the ``POST /v1/white-underbase/apply`` request / response
-envelope. Bumped when the wire format changes (independent of when
-the engine swaps from passthrough to real tracer)."""
 
 CJD_SCHEMA_VERSION = "1.0.0"
 """Schema version for the Compile Job Definition (CJD) format —

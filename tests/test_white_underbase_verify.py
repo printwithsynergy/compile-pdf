@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from compile_pdf.white_underbase.engine import (
+from compile_pdf_white_underbase.engine import (
     WhiteUnderbaseResult,
     apply_white_underbase,
 )
-from compile_pdf.white_underbase.schema import (
+from compile_pdf_white_underbase.schema import (
     WhiteUnderbasePolicy,
     WhiteUnderbaseSummary,
 )
-from compile_pdf.white_underbase.verify import verify_white_underbase
+from compile_pdf_white_underbase.verify import verify_white_underbase
 
 
 def test_verify_accepts_passthrough_result(simple_pdf: bytes) -> None:

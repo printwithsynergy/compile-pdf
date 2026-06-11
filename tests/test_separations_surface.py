@@ -12,7 +12,7 @@ from __future__ import annotations
 
 
 def test_extract_module_public_surface() -> None:
-    from compile_pdf.separations import extract
+    from compile_pdf_separations import extract
 
     # Public API: SeparationInfo dataclass + list_separations fn.
     assert hasattr(extract, "SeparationInfo")
@@ -20,7 +20,7 @@ def test_extract_module_public_surface() -> None:
 
 
 def test_api_module_public_surface() -> None:
-    from compile_pdf.separations import api
+    from compile_pdf_separations import api
 
     # Public API: the FastAPI router + the request/response models.
     assert hasattr(api, "router")
