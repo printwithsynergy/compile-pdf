@@ -15,12 +15,16 @@ the cache key composes from Codex's section versions.
 
 The FastAPI app mounts at the configured base URL (Railway service
 domain or custom apex). Auth modes are documented in
-[`deploy.md`](./deploy.md).
+[`deploy.md`](./deploy.md). Producer endpoints are served by the
+satellite packages' routers; which producers mount is gated by
+`COMPILE_PRODUCER` (see [`architecture.md`](./architecture.md)).
+The spots / separations / stream routers are always-on.
 
 | Method | Path | Purpose |
 |---|---|---|
 | `GET` | `/healthz` | Liveness + identity (alias of `/v1/healthz`) |
 | `GET` | `/v1/healthz` | Liveness + identity + version skew |
+| `GET` | `/v1/readyz` | Readiness probe (alias `/readyz`) |
 | `GET` | `/v1/version` | Bare version string |
 | `GET` | `/v1/contract` | Full contract surface (this document, JSON) |
 | `GET` | `/v1/schema/{name}` | JSON Schema for a producer plan |
@@ -30,27 +34,34 @@ domain or custom apex). Auth modes are documented in
 | `POST` | `/v1/marks/apply-multipart` | Apply a marks template (multipart upload — supports external-file marks) |
 | `POST` | `/v1/impose/apply` | Apply an impose layout |
 | `POST` | `/v1/trap/apply` | Apply a trap policy |
+| `POST` | `/v1/soft-proof/apply` | Simulate the input PDF under a destination ICC profile (ΔE summary) |
+| `POST` | `/v1/white-underbase/apply` | Generate a white / underbase / varnish / foil plate |
+| `POST` | `/v1/stream/apply` | Run a producer and chunk-stream the PDF (`application/pdf` + `X-Compile-*` headers) |
 | `POST` | `/v1/cjd/apply` | Apply a multi-producer CJD envelope (JSON) |
 | `POST` | `/v1/cjd/apply-xml` | Apply a CJD envelope (XML / JDF / PJTF body) |
 | `GET` | `/v1/lineage/{id}` | Read a lineage chain by id |
 | `GET` | `/v1/lineage` | List known lineage ids (paginated) |
 | `POST` | `/v1/retention/delete` | Data-subject erasure: bulk-delete every retention object containing `/{sha256}/` |
+| `GET` | `/v1/spots/search` | Substring + library search over the PANTONE catalogue |
+| `GET` | `/v1/spots/lookup` | Exact PANTONE name lookup (404 on miss) |
+| `GET` | `/v1/spots/libraries` | Enumerate PANTONE sub-libraries with entry counts |
+| `POST` | `/v1/separations/list` | Enumerate named separations in an input PDF |
 
 ## `/v1/healthz` shape
 
 ```json
 {
   "status": "ok",
-  "version": "0.5.1",
+  "version": "0.7.0",
   "producer": "all",
   "instance_id": "01HZ…",
   "cache_backend": "memory",
   "queue_depth": 0,
   "celery_workers": 0,
   "ghostscript": false,
-  "codex_pdf_version": "1.15.0",
-  "codex_section_versions": { "color": "1.1.0", "geom": "1.1.0", "codex-document": "1.0.0" },
-  "codex_live_section_versions": { "color": "1.1.0", "geom": "1.1.0", "codex-document": "1.0.0" },
+  "codex_pdf_version": "1.21.1",
+  "codex_section_versions": { "color": "1.1.0", "geom": "1.1.0", "codex-document": "1.3.0" },
+  "codex_live_section_versions": { "color": "1.1.0", "geom": "1.1.0", "codex-document": "1.3.0" },
   "version_skew": false
 }
 ```
@@ -66,11 +77,14 @@ redeploy when this trips.
 {
   "contract_name": "compile-pdf",
   "schema_version": "1.0.0",
-  "package_version": "0.5.1",
+  "package_version": "0.7.0",
   "schema_id": "https://printwithsynergy.com/schemas/compile/v1",
   "endpoints": ["/healthz", "/v1/healthz", "/v1/version", "/v1/contract", … ],
-  "producer_schema_versions": { "rewrite": "1.0.0", "marks": "1.0.0", "impose": "1.0.0", "trap": "1.0.0", "cjd": "1.0.0" },
-  "codex_section_versions": { "color": "1.1.0", "geom": "1.1.0", "codex-document": "1.0.0" }
+  "producer_schema_versions": {
+    "rewrite": "1.0.0", "marks": "1.1.0", "impose": "1.1.0", "trap": "1.0.0",
+    "soft_proof": "1.0.0", "stream": "1.0.0", "white_underbase": "1.0.0", "cjd": "1.0.0"
+  },
+  "codex_section_versions": { "color": "1.1.0", "geom": "1.1.0", "codex-document": "1.3.0" }
 }
 ```
 
@@ -84,11 +98,11 @@ Each producer's schema version bumps independently:
   `/v1` stays live during the transition window.
 
 The Codex pin is broader: Compile's `pyproject.toml` declares
-`codex-pdf>=1.15.0,<2.0`. Cross-major bumps require code review.
+`codex-pdf>=1.21.1,<2.0`. Cross-major bumps require code review.
 
 ## Codex section versions Compile cares about
 
-Defined in `src/compile_pdf/version.py`:
+Surfaced via `src/compile_pdf/version.py`:
 
 | Section | Source | Purpose |
 |---|---|---|
@@ -97,19 +111,32 @@ Defined in `src/compile_pdf/version.py`:
 | `codex-document` | `compile_pdf.version.CODEX_DOCUMENT_SCHEMA_VERSION_PIN` (Codex doesn't yet publish a constant) | Document model shape |
 
 A bump to any of these auto-invalidates affected cached outputs via
-the cache-key composer in `src/compile_pdf/cache.py`.
+the cache-key composer (`compile_pdf_core.cache`, the shared
+plumbing the satellite producers import).
 
 ## Producer schema versions
 
-| Producer | Constant | Schema |
-|---|---|---|
-| `rewrite` | `REWRITE_SCHEMA_VERSION` | `compile-pdf schema rewrite` |
-| `marks` | `MARKS_SCHEMA_VERSION` | `compile-pdf schema marks` |
-| `impose` | `IMPOSE_SCHEMA_VERSION` | `compile-pdf schema impose` |
-| `trap` | `TRAP_SCHEMA_VERSION` | `compile-pdf schema trap` |
-| `cjd` | `CJD_SCHEMA_VERSION` | `compile-pdf schema cjd` |
+Each constant is owned where the producer's source lives:
+rewrite / marks / impose / trap / cjd in `compile-pdf-core`'s
+`version.py` (mirrored by main); soft_proof / stream /
+white_underbase in their own satellite's `version.py`, re-exported
+by main's `src/compile_pdf/version.py` into the
+`producer_schema_versions` aggregate above.
 
-All start at `1.0.0`; each bumps independently.
+| Producer | Constant | Owned by |
+|---|---|---|
+| `rewrite` | `REWRITE_SCHEMA_VERSION` | `compile-pdf-core` |
+| `marks` | `MARKS_SCHEMA_VERSION` | `compile-pdf-core` |
+| `impose` | `IMPOSE_SCHEMA_VERSION` | `compile-pdf-core` |
+| `trap` | `TRAP_SCHEMA_VERSION` | `compile-pdf-core` |
+| `cjd` | `CJD_SCHEMA_VERSION` | `compile-pdf-core` |
+| `soft_proof` | `SOFT_PROOF_SCHEMA_VERSION` | `compile-pdf-soft-proof` |
+| `stream` | `STREAM_SCHEMA_VERSION` | `compile-pdf-stream` |
+| `white_underbase` | `WHITE_UNDERBASE_SCHEMA_VERSION` | `compile-pdf-white-underbase` |
+
+All start at `1.0.0`; each bumps independently. The `separations`
+and `spots` metadata routers carry no producer schema version —
+they are read-only and absent from `producer_schema_versions`.
 
 ## Retention-for-training opt-in
 
@@ -159,8 +186,8 @@ Lineage records (one per producer step, S3-stored) carry:
   "cache_key": "…",
   "retained_for_training": false,
   "engine_fingerprint": { "engine": "pure_python", "geom_schema_version": "1.1.0", "color_schema_version": "1.1.0" },
-  "compile_version": "0.5.1",
-  "codex_pdf_version": "1.15.0",
+  "compile_version": "0.7.0",
+  "codex_pdf_version": "1.21.1",
   "parent_lineage_id": "01HZ…",
   "started_at": "…",
   "duration_ms": 1234

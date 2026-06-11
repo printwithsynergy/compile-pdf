@@ -7,7 +7,7 @@ order: 13
 
 # Trap producer
 
-`compile_pdf.trap` applies ink-pair spread / choke trap to a PDF.
+The trap producer ([`compile-pdf-trap`](https://github.com/printwithsynergy/compile-pdf-trap)) applies ink-pair spread / choke trap to a PDF.
 "Trap" compensates for press registration error by overlapping
 adjacent inks slightly, so a thin white seam doesn't appear at the
 boundary if the press drifts a hair off.

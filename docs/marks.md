@@ -7,7 +7,7 @@ order: 11
 
 # Marks producer
 
-`compile_pdf.marks` stamps printer marks onto an input PDF. Twelve
+The marks producer ([`compile-pdf-marks`](https://github.com/printwithsynergy/compile-pdf-marks)) stamps printer marks onto an input PDF. Twelve
 v1.0 mark types across three categories, plus an external-template
 ingestion mode.
 

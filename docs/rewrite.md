@@ -7,7 +7,7 @@ order: 10
 
 # Rewrite producer
 
-`compile_pdf.rewrite` applies object-tree mutations to a single PDF
+The rewrite producer ([`compile-pdf-rewrite`](https://github.com/printwithsynergy/compile-pdf-rewrite)) applies object-tree mutations to a single PDF
 input. The output is a single PDF with the requested mutations
 applied and **everything else byte-identical** to the input — that
 "nothing else touched" guarantee is mechanically verified.
@@ -71,7 +71,7 @@ client-side (CLI) and server-side (`POST /v1/rewrite/apply`).
 ## Determinism guarantee
 
 Same input + same plan produces byte-identical output (verified by
-SHA-256). The cache key composer (`src/compile_pdf/cache.py`)
+SHA-256). The cache key composer (`compile_pdf_core.cache`)
 includes the canonical plan hash, so re-running an identical request
 short-circuits to the cached output.
 

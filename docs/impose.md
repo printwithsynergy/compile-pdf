@@ -7,7 +7,7 @@ order: 12
 
 # Impose producer
 
-`compile_pdf.impose` takes a 1-up input PDF and produces a sheet-level
+The impose producer ([`compile-pdf-impose`](https://github.com/printwithsynergy/compile-pdf-impose)) takes a 1-up input PDF and produces a sheet-level
 imposition: step-and-repeat across columns × rows, with optional
 work-and-turn / tumble back-side handling and bleed expansion.
 
