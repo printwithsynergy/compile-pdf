@@ -1,6 +1,6 @@
 ---
 title: "Architecture"
-description: "How CompilePDF splits four producers across one Python package, four containers, and one Codex read-side authority."
+description: "How CompilePDF composes an orchestrator shell, satellite producer packages, shared core plumbing, and one Codex read-side authority."
 group: "Getting started"
 order: 2
 ---
@@ -9,38 +9,81 @@ order: 2
 
 CompilePDF is the **only writer** in the Print With Synergy stack.
 Codex tells the truth of a PDF (read-only); Compile writes the bytes.
-Four producers ship under one Python package and one FastAPI app, one
-container per producer in production.
+This repo is the **orchestrator + integration shell**: every producer's
+source lives in a published satellite PyPI package, pinned in
+`pyproject.toml` and imported — not vendored — by the orchestrator's
+FastAPI app and CLI. One container per producer in production.
 
 ## Boundary
 
 - **Compile writes.** `pikepdf.new()`, `Pdf.save()`, content-stream
-  emission, page-tree mutation. All happens inside Compile.
+  emission, page-tree mutation. All happens inside Compile's
+  satellite producers.
 - **Codex describes.** Document model, color resolver, geometry
   primitives. Compile **never** re-implements these — the
   `scripts/consume_surface_audit.py` AST walker fails CI on attempts.
 - **Determinism is contractual.** Same input + same plan + same
   engine fingerprint → same SHA-256 output bytes.
 
-## The four producers
+## Who imports whom
 
-| Producer | Codex surface consumed | What it writes |
+```
+compile-pdf (this repo: api/main.py + cli + version aggregate)
+  → compile-pdf-{rewrite,marks,impose,trap}          (core producers)
+  → compile-pdf-cjd                                  (multi-producer envelope + lineage CLI)
+  → compile-pdf-stream                               (streaming dispatch over the PDF producers)
+  → compile-pdf-{soft-proof,white-underbase}         (standalone producers)
+  → compile-pdf-separations                          (read-only named-ink metadata)
+      → compile-pdf-core                             (cache, lineage, retention, auth,
+                                                      middleware, queue status, spots,
+                                                      shared schema versions)
+          → codex-pdf                                (read-side authority)
+```
+
+A producer fix lands in its satellite, is published, and this repo
+bumps the pin. There is no second vendored copy to keep in sync.
+
+## The producer roster
+
+| Producer | Package | Codex surface consumed | What it writes |
+|---|---|---|---|
+| rewrite | `compile-pdf-rewrite` | `CodexDocument` | Object-tree mutations on a single PDF: OCG flips, metadata patches, color-space swaps, hygiene strips, page lifecycle ops |
+| marks | `compile-pdf-marks` | `Box`, `Point`, `Polygon`, `polygon_offset`, `polygon_union` | Register / crop / color-bar / fold / proofing marks; external mark-template ingestion |
+| impose | `compile-pdf-impose` | `tile_grid`, `TileGrid`, `TileResult`, `CellPlacement` | Sheet-level step-and-repeat; work-and-turn / tumble; bleed handling; sift-pdf `explicit_placements` |
+| trap | `compile-pdf-trap` | `CodexSpotIntent`, `resolve_spot_swatch_color`, `delta_e_2000`, `polygon_offset` | Ink-pair spread / choke trap with three engine slots (`pure_python` / `ghostscript` / `external`) |
+| soft-proof | `compile-pdf-soft-proof` | `COLOR_SCHEMA_VERSION` (cache key) | ICC soft-proof simulation + ΔE summary |
+| white-underbase | `compile-pdf-white-underbase` | `COLOR_SCHEMA_VERSION` (cache key) | White / underbase / varnish / foil plate as a named separation |
+| cjd | `compile-pdf-cjd` | (via the producers it dispatches) | Multi-producer envelope: rewrite → marks → impose → trap, one lineage chain |
+| stream | `compile-pdf-stream` | (via the producers it dispatches) | Chunked `application/pdf` streaming over rewrite / marks / impose / trap / soft_proof |
+
+Read-only metadata routers (not producers — they write nothing):
+
+| Service | Package | Endpoints |
 |---|---|---|
-| `compile_pdf.rewrite` | `CodexDocument` | Object-tree mutations on a single PDF: OCG flips, metadata patches, color-space swaps, hygiene strips, page lifecycle ops |
-| `compile_pdf.marks` | `Box`, `Point`, `Polygon`, `polygon_offset`, `polygon_union` | Register / crop / color-bar / fold / proofing marks; external mark-template ingestion |
-| `compile_pdf.impose` | `tile_grid`, `TileGrid`, `TileResult`, `CellPlacement` | Sheet-level step-and-repeat; work-and-turn / tumble; bleed handling |
-| `compile_pdf.trap` | `CodexSpotIntent`, `resolve_spot_swatch_color`, `delta_e_2000`, `polygon_offset` | Ink-pair spread / choke trap with three engine slots (`pure_python` / `ghostscript` / `external`) |
+| spots | `compile-pdf-core` (`compile_pdf_core.spots`) | `GET /v1/spots/{search,lookup,libraries}` — PANTONE catalogue lookup over codex-pdf's reference |
+| separations | `compile-pdf-separations` | `POST /v1/separations/list` — named-ink enumeration of an input PDF |
 
 ## Deployment topology
 
-Per producer container in production. The same FastAPI app boots in
-every container; `COMPILE_PRODUCER` selects which router mounts:
+Per producer container in production. The same FastAPI app
+(`src/compile_pdf/api/main.py`) boots in every container;
+`COMPILE_PRODUCER` selects which producer router mounts:
 
-- `COMPILE_PRODUCER=rewrite` → only `/v1/rewrite/*`
-- `COMPILE_PRODUCER=marks`   → only `/v1/marks/*`
-- `COMPILE_PRODUCER=impose`  → only `/v1/impose/*`
-- `COMPILE_PRODUCER=trap`    → only `/v1/trap/*`
-- `COMPILE_PRODUCER=all`     → all four (used by `compile-sidecar`)
+- `COMPILE_PRODUCER=rewrite`         → only `/v1/rewrite/*`
+- `COMPILE_PRODUCER=marks`           → only `/v1/marks/*`
+- `COMPILE_PRODUCER=impose`          → only `/v1/impose/*`
+- `COMPILE_PRODUCER=trap`            → only `/v1/trap/*`
+- `COMPILE_PRODUCER=soft_proof`      → only `/v1/soft-proof/*`
+- `COMPILE_PRODUCER=white_underbase` → only `/v1/white-underbase/*`
+- `COMPILE_PRODUCER=all` (default)   → every producer **plus** CJD
+  (`/v1/cjd/*`), lineage (`/v1/lineage/*`), and retention
+  (`/v1/retention/*`) — used by `compile-sidecar`
+
+Independent of `COMPILE_PRODUCER`, three **always-on** routers mount in
+every deployment: `/v1/spots/*` and `/v1/separations/*` (read-only
+metadata) and `/v1/stream/*` (the streaming wrapper), so a single
+deploy serves both JSON-shaped `/apply` and chunked PDF streaming
+without flipping the env var.
 
 Shared infrastructure (one of each per Railway project):
 
@@ -53,10 +96,27 @@ Shared infrastructure (one of each per Railway project):
   example. Omitting the header returns the full document (backward
   compatible).
 
+## Schema versions — satellite-owned, aggregated here
+
+Each producer's schema version is owned where its source lives:
+
+- rewrite / marks / impose / trap / cjd — constants in
+  `compile-pdf-core`'s `version.py` (the satellites' shared source of
+  truth), mirrored by main's `src/compile_pdf/version.py`.
+- soft_proof / stream / white_underbase — each satellite ships its own
+  `version.py`; main's `src/compile_pdf/version.py` **re-exports** them
+  into the `PRODUCER_SCHEMA_VERSIONS` aggregate that `GET /v1/contract`
+  publishes.
+
+A satellite bumps its schema version, publishes, and main's pin bump
+propagates the new version into the contract automatically.
+
 ## Cache-key composition
 
-Per `src/compile_pdf/cache.py`, the per-job cache key concatenates
-(alphabetical-by-name, `|` separator, then SHA-256):
+Per `compile_pdf_core.cache` (the shared composer the satellites
+import; main keeps a mirror in `src/compile_pdf/cache.py`), the
+per-job cache key concatenates (alphabetical-by-name, `|` separator,
+then SHA-256):
 
 1. `codex_document_schema_version`
 2. `codex_pdf_package_version`
