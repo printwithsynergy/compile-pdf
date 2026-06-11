@@ -1,5 +1,7 @@
 # compile-pdf
 
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/compilepdf)
+
 CompilePDF — programmatic PDF assembly: a deterministic API build step for rewriting and generating print-ready PDFs.
 
 Four producers under one Python package, four FastAPI services in one Railway project, one Redis-backed Celery broker, one S3-compatible object bucket.
