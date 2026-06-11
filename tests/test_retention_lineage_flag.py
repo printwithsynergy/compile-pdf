@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compile_pdf.lineage.store import (
+from compile_pdf_core.lineage.store import (
     LineageStep,
     MemoryLineageStore,
     serialize_chain,

@@ -7,8 +7,8 @@ import sys
 from pathlib import Path
 
 import click
+from compile_pdf_core.lineage.store import LineageNotFoundError, default_store
 
-from compile_pdf.lineage.store import LineageNotFoundError, default_store
 from compile_pdf.trap.engine import TrapEngineError, apply_policy
 from compile_pdf.trap.policy_schema import TrapPolicy, trap_policy_json_schema
 from compile_pdf.trap.verify import verify_trap

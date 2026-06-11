@@ -8,15 +8,15 @@ import sys
 from pathlib import Path
 
 import click
-
-from compile_pdf.cjd.orchestrator import CjdOrderError, execute
-from compile_pdf.cjd.schema import CjdJob, cjd_job_json_schema
-from compile_pdf.cjd.xml import CjdXmlError, parse_cjd_xml, render_cjd_xml
-from compile_pdf.lineage.store import (
+from compile_pdf_core.lineage.store import (
     LineageNotFoundError,
     default_store,
     serialize_chain,
 )
+
+from compile_pdf.cjd.orchestrator import CjdOrderError, execute
+from compile_pdf.cjd.schema import CjdJob, cjd_job_json_schema
+from compile_pdf.cjd.xml import CjdXmlError, parse_cjd_xml, render_cjd_xml
 
 
 def register(group: click.Group) -> None:

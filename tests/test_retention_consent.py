@@ -5,8 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-
-from compile_pdf.retention.consent import (
+from compile_pdf_core.retention.consent import (
     CONSENT_HEADER,
     TENANT_HEADER,
     parse_consent,

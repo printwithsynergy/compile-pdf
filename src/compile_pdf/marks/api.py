@@ -20,6 +20,12 @@ import tempfile
 from pathlib import Path
 
 import structlog
+from compile_pdf_core.retention import (
+    CONSENT_FORM_FIELD,
+    parse_consent,
+    persist_if_opted_in,
+    resolve_tenant,
+)
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel, Field, ValidationError
 
@@ -27,12 +33,6 @@ from compile_pdf.cache import compute_cache_key, hash_canonical_plan
 from compile_pdf.marks.engine import MarksTemplateError, apply_template
 from compile_pdf.marks.template_schema import MarksTemplate
 from compile_pdf.marks.verify import verify_marks
-from compile_pdf.retention import (
-    CONSENT_FORM_FIELD,
-    parse_consent,
-    persist_if_opted_in,
-    resolve_tenant,
-)
 from compile_pdf.version import (
     CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
     MARKS_SCHEMA_VERSION,
