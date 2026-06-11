@@ -8,12 +8,11 @@ cases the API surface doesn't reach.
 from __future__ import annotations
 
 import pytest
-
-from compile_pdf.white_underbase.engine import (
+from compile_pdf_white_underbase.engine import (
     WhiteUnderbaseEngineError,
     apply_white_underbase,
 )
-from compile_pdf.white_underbase.schema import WhiteUnderbasePolicy
+from compile_pdf_white_underbase.schema import WhiteUnderbasePolicy
 
 
 def _policy(**kwargs: object) -> WhiteUnderbasePolicy:

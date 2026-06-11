@@ -9,14 +9,14 @@ from __future__ import annotations
 
 
 def test_module_exposes_router() -> None:
-    from compile_pdf import white_underbase
+    import compile_pdf_white_underbase as white_underbase
 
     assert hasattr(white_underbase, "router")
     assert "router" in white_underbase.__all__
 
 
 def test_module_exposes_schema_version() -> None:
-    from compile_pdf import white_underbase
+    import compile_pdf_white_underbase as white_underbase
 
     assert hasattr(white_underbase, "WHITE_UNDERBASE_SCHEMA_VERSION")
     assert "WHITE_UNDERBASE_SCHEMA_VERSION" in white_underbase.__all__

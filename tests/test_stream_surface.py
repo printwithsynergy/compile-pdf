@@ -9,14 +9,14 @@ from __future__ import annotations
 
 
 def test_module_exposes_router() -> None:
-    from compile_pdf import stream
+    import compile_pdf_stream as stream
 
     assert hasattr(stream, "router")
     assert "router" in stream.__all__
 
 
 def test_module_exposes_schema_version() -> None:
-    from compile_pdf import stream
+    import compile_pdf_stream as stream
 
     assert hasattr(stream, "STREAM_SCHEMA_VERSION")
     assert "STREAM_SCHEMA_VERSION" in stream.__all__

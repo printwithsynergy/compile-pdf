@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compile_pdf.stream.verify import verify_stream_output
+from compile_pdf_stream.verify import verify_stream_output
 
 
 def test_verify_accepts_pdf_bytes() -> None:

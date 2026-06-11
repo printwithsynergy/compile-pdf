@@ -14,7 +14,7 @@ from __future__ import annotations
 
 
 def test_module_exposes_router() -> None:
-    from compile_pdf import soft_proof
+    import compile_pdf_soft_proof as soft_proof
 
     assert hasattr(soft_proof, "router")
     assert "router" in soft_proof.__all__

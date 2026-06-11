@@ -424,7 +424,7 @@ paths:
 
         The current engine is a passthrough (see
 
-        :mod:`compile_pdf.soft_proof.engine`); the response shape is
+        :mod:`compile_pdf_soft_proof.engine`); the response shape is
 
         final. Once the real LCMS-based simulator lands the only
 
@@ -472,7 +472,7 @@ paths:
 
         Today''s engine is a passthrough (see
 
-        :mod:`compile_pdf.white_underbase.engine`); the response shape
+        :mod:`compile_pdf_white_underbase.engine`); the response shape
 
         is final. Once the real tracer lands the only visible change
 
