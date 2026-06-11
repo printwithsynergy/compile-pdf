@@ -324,7 +324,12 @@ dependencies = [
     { name = "celery", extra = ["redis"] },
     { name = "click" },
     { name = "codex-pdf" },
+    { name = "compile-pdf-cjd" },
     { name = "compile-pdf-core" },
+    { name = "compile-pdf-impose" },
+    { name = "compile-pdf-marks" },
+    { name = "compile-pdf-rewrite" },
+    { name = "compile-pdf-trap" },
     { name = "defusedxml" },
     { name = "fastapi" },
     { name = "httpx" },
@@ -372,7 +377,12 @@ requires-dist = [
     { name = "celery", extras = ["redis"], specifier = ">=5.3" },
     { name = "click", specifier = ">=8.1" },
     { name = "codex-pdf", specifier = ">=1.21.1,<2.0" },
-    { name = "compile-pdf-core", specifier = ">=0.1.3,<1.0" },
+    { name = "compile-pdf-cjd", specifier = ">=0.1.2,<1.0" },
+    { name = "compile-pdf-core", specifier = ">=0.1.4,<1.0" },
+    { name = "compile-pdf-impose", specifier = ">=0.2.2,<1.0" },
+    { name = "compile-pdf-marks", specifier = ">=0.1.3,<1.0" },
+    { name = "compile-pdf-rewrite", specifier = ">=0.1.2,<1.0" },
+    { name = "compile-pdf-trap", specifier = ">=0.2.3,<1.0" },
     { name = "defusedxml", specifier = ">=0.7.1" },
     { name = "fastapi", specifier = ">=0.110" },
     { name = "httpx", specifier = ">=0.27" },
@@ -410,8 +420,29 @@ dev = [
 ]
 
 [[package]]
+name = "compile-pdf-cjd"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "compile-pdf-core" },
+    { name = "compile-pdf-impose" },
+    { name = "compile-pdf-marks" },
+    { name = "compile-pdf-rewrite" },
+    { name = "compile-pdf-trap" },
+    { name = "defusedxml" },
+    { name = "fastapi" },
+    { name = "pydantic" },
+    { name = "structlog" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e7/08/3fb499274771d0fb26213dc78974018171003c7c0a32cdff606db810626f/compile_pdf_cjd-0.1.2.tar.gz", hash = "sha256:4d191f281fb7c261556f01628e99c6eaf21b08f8a2b71d437d19ef5ff91f8bdd", size = 92682, upload-time = "2026-06-11T11:56:56.07Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4e/2f/dab2f3b7260fb9613f749eb703600dc8f0143e354f1da5883b519c2ff205/compile_pdf_cjd-0.1.2-py3-none-any.whl", hash = "sha256:14d6aef2d31fc9658c222bc928a2185993c0394cd0aa1b7ce6ef905a1f5046d6", size = 13419, upload-time = "2026-06-11T11:56:55.056Z" },
+]
+
+[[package]]
 name = "compile-pdf-core"
-version = "0.1.3"
+version = "0.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "boto3" },
@@ -427,9 +458,85 @@ dependencies = [
     { name = "structlog" },
     { name = "ulid-py" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/32/80/4cb8fc4114f77a1f8c629581c784a0cecb3a104e3b8856d91687e2d8960a/compile_pdf_core-0.1.3.tar.gz", hash = "sha256:b6af1b96a2a6384d20baf2f06bd6b59951738943545c98e105b599164c231288", size = 85312, upload-time = "2026-06-11T11:29:53.808Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9d/82/0350d16553d44cfd7804ffb56091e35b99c6fc77e43d6908af540bfe5c61/compile_pdf_core-0.1.4.tar.gz", hash = "sha256:9a788ba8e290bbc2586135b410c8f27c7a93053404acb1c20fc3d929aa81572b", size = 85731, upload-time = "2026-06-11T12:09:39.384Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a5/4b/9d332839ec163422befa0dee05a3b87682d8f694c3b2ba1b0beb01561fcc/compile_pdf_core-0.1.3-py3-none-any.whl", hash = "sha256:f6e68e24f42457af8a787cdbe089cb1099114afa4ce3b0e017ac35e4c8ba0448", size = 26994, upload-time = "2026-06-11T11:29:52.795Z" },
+    { url = "https://files.pythonhosted.org/packages/04/0f/d2a701817ad5e158def568d6959b3b6c2fdb9d648e9f773e8ee38668dc98/compile_pdf_core-0.1.4-py3-none-any.whl", hash = "sha256:2fb828c6de9bee5d69cf6d98b6e2caeff08b38107d363813a100543da0f6c3d4", size = 27190, upload-time = "2026-06-11T12:09:38.462Z" },
+]
+
+[[package]]
+name = "compile-pdf-impose"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "codex-pdf" },
+    { name = "compile-pdf-core" },
+    { name = "fastapi" },
+    { name = "pikepdf" },
+    { name = "pillow" },
+    { name = "pydantic" },
+    { name = "structlog" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/dc/83/07c739b0ed6174d6ced47a5ca8f5bb3c6510e45fde5f6b72b5734430b6d0/compile_pdf_impose-0.2.2.tar.gz", hash = "sha256:bc1de186f4b1e14f59d414e00a256caa2e07d4733ab7f5c5e7fe3c32d92671c8", size = 96510, upload-time = "2026-06-11T12:14:34.615Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/16/0a/1ed2aaf49382c3a5bb990b9f77ff9e31e28a51dcc6a837afc73e0e74f197/compile_pdf_impose-0.2.2-py3-none-any.whl", hash = "sha256:a6339249bb17aa0400c0f3a6d1dc21b7207410d0536135f20adfd8d035b161aa", size = 18599, upload-time = "2026-06-11T12:14:33.557Z" },
+]
+
+[[package]]
+name = "compile-pdf-marks"
+version = "0.1.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "codex-pdf" },
+    { name = "compile-pdf-core" },
+    { name = "fastapi" },
+    { name = "pikepdf" },
+    { name = "pillow" },
+    { name = "pydantic" },
+    { name = "structlog" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/90/d8/047ab170e519a8ab5a777d0a6309cd26680e3738cb052dc731c37db381d3/compile_pdf_marks-0.1.3.tar.gz", hash = "sha256:be990839623ae561205f515b9d2520555539f61f551442f05092eecc39f698c7", size = 111061, upload-time = "2026-06-11T12:09:39.602Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/22/0e/9a2f7def20c521d20147b76f4bab60f93787a870298cdad53abe0a864918/compile_pdf_marks-0.1.3-py3-none-any.whl", hash = "sha256:626c8b9016cc80c2ee01258537428fd3d1497daf10b771f2b0592f111fced7cf", size = 29161, upload-time = "2026-06-11T12:09:38.455Z" },
+]
+
+[[package]]
+name = "compile-pdf-rewrite"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "codex-pdf" },
+    { name = "compile-pdf-core" },
+    { name = "fastapi" },
+    { name = "pikepdf" },
+    { name = "pillow" },
+    { name = "pydantic" },
+    { name = "structlog" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bd/d9/788bd953ab6aff970460b16d079dd9c43bb113cd3eaab75f67339e16eda1/compile_pdf_rewrite-0.1.2.tar.gz", hash = "sha256:4b6680dead3f4904fdc8eb4de1aa8340cb3c0e1a5df8af24506ea4125854af32", size = 93538, upload-time = "2026-06-11T11:56:44.647Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a3/4f/09200a6269554f0e358aaa0c8cad5efe3db3c39dd60a43ce249267d8f022/compile_pdf_rewrite-0.1.2-py3-none-any.whl", hash = "sha256:5960d155657c247b7bdcca2d79a45ca3fdc301d635673b5fa1937f688a2f7b54", size = 15885, upload-time = "2026-06-11T11:56:43.678Z" },
+]
+
+[[package]]
+name = "compile-pdf-trap"
+version = "0.2.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "codex-pdf" },
+    { name = "compile-pdf-core" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "pikepdf" },
+    { name = "pydantic" },
+    { name = "structlog" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/05/a9/a95abe282477028b3d67f1ee06175b108262101812d9accffe9fb8f2d332/compile_pdf_trap-0.2.3.tar.gz", hash = "sha256:93aa4ef267ac87e02b233624adca504d98f00edff6198569d8f42c8257cafd61", size = 121068, upload-time = "2026-06-11T12:44:27.792Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5d/0d/cc5130ac6b6be2723448ead426a6fd1289beb58a4275bad660ff6fbf9b90/compile_pdf_trap-0.2.3-py3-none-any.whl", hash = "sha256:32b497f6216e4f554d9c9f04c7082edc8361cafb3d194f2de247473662eb445d", size = 29726, upload-time = "2026-06-11T12:44:26.654Z" },
 ]
 
 [[package]]
