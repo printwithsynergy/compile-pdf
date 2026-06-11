@@ -78,9 +78,18 @@ def test_delete_endpoint_removes_all_matching(configured: _FakeS3) -> None:
 
 def test_delete_endpoint_zero_hits_is_not_an_error(configured: _FakeS3) -> None:  # noqa: ARG001
     client = TestClient(app)
-    response = client.post("/v1/retention/delete", json={"sha256": "z" * 64})
+    response = client.post("/v1/retention/delete", json={"sha256": "f" * 64})
     assert response.status_code == 200
     assert response.json() == {"deleted": 0, "keys": []}
+
+
+def test_delete_endpoint_rejects_non_hex_and_partial_sha() -> None:
+    # The store matches keys by the substring "/{sha256}/", so a short or
+    # non-hex value would over-match unrelated objects. Both must 422.
+    client = TestClient(app)
+    for bad in ("a" * 63, "a" * 65, "z" * 64, "abc", "../../etc"):
+        response = client.post("/v1/retention/delete", json={"sha256": bad})
+        assert response.status_code == 422, f"{bad!r} -> {response.status_code}"
 
 
 def test_delete_endpoint_503_when_not_configured(monkeypatch: pytest.MonkeyPatch) -> None:
