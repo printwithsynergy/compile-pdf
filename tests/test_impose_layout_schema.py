@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
-
-from compile_pdf.impose.layout_schema import (
+from compile_pdf_impose.layout_schema import (
     Cell,
     ExplicitPlacement,
     Gutter,
@@ -14,6 +12,7 @@ from compile_pdf.impose.layout_schema import (
     Sheet,
     impose_plan_json_schema,
 )
+from pydantic import ValidationError
 
 
 def test_minimum_plan_accepted() -> None:

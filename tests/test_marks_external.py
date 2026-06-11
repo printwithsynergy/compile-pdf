@@ -7,11 +7,10 @@ from pathlib import Path
 
 import pikepdf
 import pytest
+from compile_pdf_marks.engine import MarksTemplateError, apply_template
+from compile_pdf_marks.template_schema import ExternalMark, MarksTemplate
 from pikepdf import Array, Dictionary, Name
 from PIL import Image
-
-from compile_pdf.marks.engine import MarksTemplateError, apply_template
-from compile_pdf.marks.template_schema import ExternalMark, MarksTemplate
 
 
 def _make_external_pdf() -> bytes:

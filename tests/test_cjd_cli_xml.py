@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+from compile_pdf_cjd.schema import CjdJob
+from compile_pdf_cjd.xml import render_cjd_xml
 from compile_pdf_core.lineage.store import reset_default_store
 
-from compile_pdf.cjd.schema import CjdJob
-from compile_pdf.cjd.xml import render_cjd_xml
 from compile_pdf.cli import cli
 
 

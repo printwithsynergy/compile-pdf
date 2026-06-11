@@ -6,9 +6,8 @@ import io
 
 import pikepdf
 import pytest
-
-from compile_pdf.rewrite.engine import RewritePlanError, apply_plan
-from compile_pdf.rewrite.plan_schema import RewritePlan
+from compile_pdf_rewrite.engine import RewritePlanError, apply_plan
+from compile_pdf_rewrite.plan_schema import RewritePlan
 
 
 def _open(blob: bytes) -> pikepdf.Pdf:

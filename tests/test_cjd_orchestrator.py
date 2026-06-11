@@ -5,10 +5,9 @@ from __future__ import annotations
 import base64
 
 import pytest
+from compile_pdf_cjd.orchestrator import CjdOrderError, execute
+from compile_pdf_cjd.schema import CjdJob
 from compile_pdf_core.lineage.store import MemoryLineageStore
-
-from compile_pdf.cjd.orchestrator import CjdOrderError, execute
-from compile_pdf.cjd.schema import CjdJob
 
 
 def _b64(data: bytes) -> str:

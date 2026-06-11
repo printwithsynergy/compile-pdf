@@ -5,9 +5,8 @@ from __future__ import annotations
 import json
 
 import pytest
+from compile_pdf_rewrite.plan_schema import RewritePlan, rewrite_plan_json_schema
 from pydantic import ValidationError
-
-from compile_pdf.rewrite.plan_schema import RewritePlan, rewrite_plan_json_schema
 
 
 def _validate(ops: list[dict[str, object]]) -> RewritePlan:

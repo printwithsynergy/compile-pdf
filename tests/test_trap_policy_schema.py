@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
-
-from compile_pdf.trap.policy_schema import (
+from compile_pdf_trap.policy_schema import (
     InkPairRule,
     TrapPolicy,
     TrapZone,
     trap_policy_json_schema,
 )
+from pydantic import ValidationError
 
 
 def test_minimum_policy_accepted() -> None:

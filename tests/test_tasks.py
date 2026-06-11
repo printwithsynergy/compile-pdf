@@ -53,7 +53,7 @@ def test_rewrite_task_round_trips() -> None:
     from compile_pdf.tasks import make_celery_app
 
     app = make_celery_app()
-    task = app.tasks["compile_pdf.rewrite.apply"]
+    task = app.tasks["compile_pdf_rewrite.apply"]
     result = task.apply(
         kwargs={
             "payload": {
@@ -71,7 +71,7 @@ def test_marks_task_round_trips() -> None:
     from compile_pdf.tasks import make_celery_app
 
     app = make_celery_app()
-    task = app.tasks["compile_pdf.marks.apply"]
+    task = app.tasks["compile_pdf_marks.apply"]
     body = task.apply(
         kwargs={
             "payload": {
@@ -87,7 +87,7 @@ def test_impose_task_round_trips() -> None:
     from compile_pdf.tasks import make_celery_app
 
     app = make_celery_app()
-    task = app.tasks["compile_pdf.impose.apply"]
+    task = app.tasks["compile_pdf_impose.apply"]
     body = task.apply(
         kwargs={
             "payload": {
@@ -107,7 +107,7 @@ def test_trap_task_returns_diff() -> None:
     from compile_pdf.tasks import make_celery_app
 
     app = make_celery_app()
-    task = app.tasks["compile_pdf.trap.apply"]
+    task = app.tasks["compile_pdf_trap.apply"]
     body = task.apply(
         kwargs={
             "payload": {
@@ -133,7 +133,7 @@ def test_cjd_task_orchestrates_full_chain() -> None:
     from compile_pdf.tasks import make_celery_app
 
     app = make_celery_app()
-    task = app.tasks["compile_pdf.cjd.execute"]
+    task = app.tasks["compile_pdf_cjd.execute"]
     body = task.apply(
         kwargs={
             "job_payload": {

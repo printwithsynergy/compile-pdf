@@ -6,10 +6,8 @@ import io
 
 import pikepdf
 import pytest
-from pikepdf import Name
-
-from compile_pdf.marks.engine import MarksTemplateError, apply_template
-from compile_pdf.marks.template_schema import (
+from compile_pdf_marks.engine import MarksTemplateError, apply_template
+from compile_pdf_marks.template_schema import (
     BleedMark,
     ColorBar,
     CropMark,
@@ -18,6 +16,7 @@ from compile_pdf.marks.template_schema import (
     RegisterMark,
     SlugText,
 )
+from pikepdf import Name
 
 
 def test_empty_template_is_noop(printer_pdf: bytes) -> None:
@@ -113,7 +112,7 @@ def test_engine_is_deterministic(printer_pdf: bytes) -> None:
 
 
 def test_external_file_missing_raises(printer_pdf: bytes, tmp_path) -> None:
-    from compile_pdf.marks.template_schema import ExternalMark
+    from compile_pdf_marks.template_schema import ExternalMark
 
     template = MarksTemplate(
         marks=[ExternalMark(type="external", file="does-not-exist.pdf", anchor="trim_center")]

@@ -125,10 +125,25 @@ cache_key:
 
 S3-backed in prod; local fallback for offline dev.
 
+## Producer packaging — imported, not vendored
+
+The four core producers (**rewrite**, **marks**, **impose**, **trap**)
+and the **CJD** orchestrator no longer live in this repo's `src/` — they
+are the published satellite packages (`compile-pdf-{rewrite,marks,impose,
+trap,cjd}`), pinned in `pyproject.toml` and imported by `api/main.py` /
+`cli/`. This repo is the **orchestrator + integration shell** that mounts
+their routers plus its own producers (soft_proof, white_underbase,
+separations, spots, stream) and the shared `compile-pdf-core` plumbing
+(cache, lineage, retention, schema versions). A producer fix lands in its
+satellite, is published, and main bumps the pin — there is no second
+vendored copy to keep in sync (that duplication caused the same bug to be
+fixed twice). Each satellite is reconciled to be a **superset** of what
+main previously vendored, so the consolidation lost no capability.
+
 ## Lazy router mounting
 
-`src/compile_pdf/api/main.py:213-286` mounts producer routers on
-demand, gated by `COMPILE_PRODUCER`:
+`src/compile_pdf/api/main.py` mounts producer routers on
+demand (imported from the satellite packages), gated by `COMPILE_PRODUCER`:
 
 - `COMPILE_PRODUCER=all` (default) — mounts all four producers + CJD
   + lineage + retention.
