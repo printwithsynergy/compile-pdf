@@ -1,0 +1,3780 @@
+openapi: 3.1.0
+info:
+  title: compile-pdf
+  description: The only writer in the Print With Synergy stack.
+  version: 0.7.0
+paths:
+  /v1/healthz:
+    get:
+      summary: Healthz
+      description: 'Liveness + identity + version-skew readout.
+
+
+        Per spec §1.11a — extends codex''s HealthResponse with producer,
+
+        instance_id, codex versions, and ``version_skew`` boolean derived
+
+        from comparing compiled-against vs live Codex section versions.
+
+        Compile''s contract guard (§1.11c) consumes this on the client side.'
+      operationId: healthz_v1_healthz_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /v1/version:
+    get:
+      summary: Version Endpoint
+      operationId: version_endpoint_v1_version_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+  /v1/readyz:
+    get:
+      summary: Readyz
+      description: 'Readiness probe — Phase F of the cross-stack architecture audit
+
+        (lint-pdf/AUDIT.md finding #15). Equivalent to /healthz today;
+
+        future hook point for downstream readiness (codex_pdf availability,
+
+        cache backend reachability, Ghostscript subprocess pool warmth).'
+      operationId: readyz_v1_readyz_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Readyz V1 Readyz Get
+  /v1/contract:
+    get:
+      summary: Contract Endpoint
+      description: 'Per spec §6.2 — exposes the full contract surface so callers can
+
+        pin against ``producer_schema_versions`` and ``codex_section_versions``.
+
+
+        Mirrors codex-pdf''s GET /v1/contract pattern verbatim.'
+      operationId: contract_endpoint_v1_contract_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractResponse'
+  /v1/rewrite/apply:
+    post:
+      tags:
+      - rewrite
+      summary: Rewrite Apply
+      description: 'Apply a rewrite plan to an inline base64-encoded PDF.
+
+
+        Verification (spec §2.3 — three layers) runs server-side before the
+
+        response is returned. A failed verify is a 500 — the plan was valid
+
+        but the engine produced output that doesn''t satisfy the post-conditions.'
+      operationId: rewrite_apply_v1_rewrite_apply_post
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RewriteApplyRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewriteApplyResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/marks/apply:
+    post:
+      tags:
+      - marks
+      summary: Marks Apply
+      description: 'Stamp a marks template over an inline base64-encoded PDF.
+
+
+        Verification (spec §2.3 four layers) runs server-side before the
+
+        response is returned. A failed verify is a 500 — the template was
+
+        valid but the engine produced output that doesn''t satisfy the
+
+        post-conditions.'
+      operationId: marks_apply_v1_marks_apply_post
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarksApplyRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarksApplyResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/marks/apply-multipart:
+    post:
+      tags:
+      - marks
+      summary: Marks Apply Multipart
+      description: 'Stamp a marks template that may include ``external`` marks.
+
+
+        External files arrive as separate multipart parts; the engine
+
+        resolves each ``ExternalMark.file`` against the uploaded part with
+
+        that name. Unknown external references (no matching part) → 422.'
+      operationId: marks_apply_multipart_v1_marks_apply_multipart_post
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_marks_apply_multipart_v1_marks_apply_multipart_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarksApplyResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/marks/validate:
+    post:
+      tags:
+      - marks
+      summary: Validate Marks Template
+      description: 'Validate a marks template shape without applying it to a PDF.
+
+
+        Parses the template JSON, resolves any $expr values against synthetic
+
+        page geometry (A4 at 72dpi), and returns the resolved mark count.
+
+        Scripted marks are resolved against dummy geometry so callers can verify
+
+        expression syntax before submitting a real PDF.'
+      operationId: validate_marks_template_v1_marks_validate_post
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateResponse'
+        '422':
+          description: Invalid marks template or expression error
+  /v1/impose/apply:
+    post:
+      tags:
+      - impose
+      summary: Impose Apply
+      description: 'Impose an inline base64-encoded PDF onto sheets per the plan.
+
+
+        Pass ``?async=true`` to enqueue the job on Celery and receive a ``202``
+
+        ``AsyncJobAccepted`` response. Poll ``GET /v1/jobs/{job_id}`` until the
+
+        status is ``complete`` or ``failed``.'
+      operationId: impose_apply_v1_impose_apply_post
+      parameters:
+      - name: async
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Async
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImposeApplyRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImposeApplyResponse'
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncJobAccepted'
+          description: Accepted
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/trap/apply:
+    post:
+      tags:
+      - trap
+      summary: Trap Apply
+      description: 'Apply a trap policy to an inline base64-encoded PDF.
+
+
+        Pass ``?async=true`` to enqueue the job on Celery and receive a ``202``
+
+        ``AsyncJobAccepted`` response. Poll ``GET /v1/jobs/{job_id}`` until the
+
+        status is ``complete`` or ``failed``.'
+      operationId: trap_apply_v1_trap_apply_post
+      parameters:
+      - name: async
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Async
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrapApplyRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrapApplyResponse'
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncJobAccepted'
+          description: Accepted
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/trap/preview:
+    post:
+      tags:
+      - trap
+      summary: Trap Preview
+      description: 'Compute trap operations against ``payload`` and return metadata only —
+
+        no ``output_pdf_b64`` and no retention persistence.
+
+
+        Used by the editor''s background trap-preview overlay so the UI can show
+
+        where trap regions will land without waiting on (or paying egress for) a
+
+        full PDF rewrite. The underlying analysis is the same code path as
+
+        ``/v1/trap/apply``; callers wanting bit-exact preview must still submit the
+
+        apply request.'
+      operationId: trap_preview_v1_trap_preview_post
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrapApplyRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrapPreviewResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/soft-proof/apply:
+    post:
+      tags:
+      - soft-proof
+      summary: Soft Proof Apply
+      description: 'Simulate the input PDF under the destination ICC profile.
+
+
+        The current engine is a passthrough (see
+
+        :mod:`compile_pdf.soft_proof.engine`); the response shape is
+
+        final. Once the real LCMS-based simulator lands the only
+
+        visible change to callers is that the ΔE summary becomes
+
+        meaningfully larger for mismatched profile pairs.'
+      operationId: soft_proof_apply_v1_soft_proof_apply_post
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SoftProofApplyRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoftProofApplyResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/white-underbase/apply:
+    post:
+      tags:
+      - white-underbase
+      summary: White Underbase Apply
+      description: 'Generate a white / underbase plate per the request policy.
+
+
+        Today''s engine is a passthrough (see
+
+        :mod:`compile_pdf.white_underbase.engine`); the response shape
+
+        is final. Once the real tracer lands the only visible change
+
+        to callers is that ``output_pdf_b64`` differs from the input
+
+        when the policy selects any pages.'
+      operationId: white_underbase_apply_v1_white_underbase_apply_post
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WhiteUnderbaseApplyRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WhiteUnderbaseApplyResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/cjd/apply:
+    post:
+      tags:
+      - cjd
+      summary: Cjd Apply
+      description: 'Execute a CJD job: orchestrate the four producers in dependency
+
+        order, persist lineage records, return the final PDF + chain.
+
+
+        Pass ``?async=true`` to enqueue the job on Celery and receive a ``202``
+
+        ``AsyncJobAccepted`` response. Poll ``GET /v1/jobs/{job_id}`` until the
+
+        status is ``complete`` or ``failed``.'
+      operationId: cjd_apply_v1_cjd_apply_post
+      parameters:
+      - name: async
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Async
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CjdJob'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CjdApplyResponse'
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncJobAccepted'
+          description: Accepted
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/cjd/apply-xml:
+    post:
+      tags:
+      - cjd
+      summary: Cjd Apply Xml
+      description: 'XML-encoded variant of POST /v1/cjd/apply.
+
+
+        Body is a CJD XML envelope (per :mod:`compile_pdf.cjd.xml`); the
+
+        response shape matches the JSON endpoint exactly. Useful for
+
+        operators integrating Compile into JDF / PJTF pipelines that
+
+        already speak XML on the wire.'
+      operationId: cjd_apply_xml_v1_cjd_apply_xml_post
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CjdApplyResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/lineage/{lineage_id}:
+    get:
+      tags:
+      - lineage
+      summary: Lineage Get
+      description: Fetch a lineage chain by id.
+      operationId: lineage_get_v1_lineage__lineage_id__get
+      parameters:
+      - name: lineage_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Lineage Id
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Lineage Get V1 Lineage  Lineage Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/lineage:
+    get:
+      tags:
+      - lineage
+      summary: Lineage List
+      description: List known lineage ids (best-effort; backend may paginate).
+      operationId: lineage_list_v1_lineage_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineageListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/retention/delete:
+    post:
+      tags:
+      - retention
+      summary: Retention Delete
+      description: 'Delete every retention object whose key contains the given sha256.
+
+
+        Always returns 200 with a count and the deleted keys; zero hits
+
+        is not an error (matches the spec: "any matching key", which may
+
+        be none). Misconfiguration (no bucket) → 503; boto3 errors → 500.'
+      operationId: retention_delete_v1_retention_delete_post
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetentionDeleteRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetentionDeleteResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/spots/search:
+    get:
+      tags:
+      - spots
+      summary: Search the PANTONE catalogue
+      description: 'Substring + library search over codex-pdf''s catalogue.
+
+
+        Empty / missing ``q`` returns the first ``limit`` entries; useful
+
+        for an initial "browse" view in the editor''s SwatchesPicker.'
+      operationId: search_v1_spots_search_get
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Substring match on normalized name.
+          title: Q
+        description: Substring match on normalized name.
+      - name: library
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter to one sub-library.
+          title: Library
+        description: Filter to one sub-library.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/spots/lookup:
+    get:
+      tags:
+      - spots
+      summary: Exact lookup by canonical name
+      description: 'Resolve a canonical name to a :class:`SpotEntry`.
+
+
+        Uses :func:`codex_pdf.color.lookup_pantone_spot` which falls back
+
+        to the alternate-key form (``PANTONE 485 C`` ↔ ``PANTONE 485C``).'
+      operationId: lookup_v1_spots_lookup_get
+      parameters:
+      - name: name
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          title: Name
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpotEntry'
+        '404':
+          description: Unknown PANTONE name
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/spots/libraries:
+    get:
+      tags:
+      - spots
+      summary: List the sub-libraries in the catalogue
+      description: 'Enumerate the sub-libraries (Formula Guide Coated, Color
+
+        Bridge Uncoated, etc.) with per-library entry counts.
+
+
+        Returned in declaration order from the loaded reference. ``id``
+
+        matches the ``library`` filter accepted by ``/search``.'
+      operationId: libraries_v1_spots_libraries_get
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibrariesResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/separations/list:
+    post:
+      tags:
+      - separations
+      summary: Enumerate named separations in an input PDF
+      description: 'Walk every page of ``req.input_pdf_b64`` and return one entry
+
+        per distinct named separation.
+
+
+        Process colors (DeviceCMYK / DeviceGray / ICCBased) are NOT
+
+        enumerated — only named separations declared via ``/Separation``
+
+        or ``/DeviceN`` color-space arrays in ``/Resources/ColorSpace``.'
+      operationId: list_endpoint_v1_separations_list_post
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeparationsListRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeparationsListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/stream/apply:
+    post:
+      tags:
+      - stream
+      summary: Stream Apply
+      description: "Run the named producer's engine and stream the resulting PDF.\n\nErrors map as:\n\
+        \  - 400 if the producer name is unknown or the payload doesn't\n    carry a valid ``input_pdf_b64``\
+        \ / schema-validated body.\n  - 422 if the underlying engine rejects an otherwise valid\n    payload\
+        \ (e.g. trap policy references unknown separations).\n  - 500 if the engine produced bytes that\
+        \ don't pass the\n    wrapper-level verify (no PDF header, empty output) — at\n    that point\
+        \ the producer's own verify is suspect."
+      operationId: stream_apply_v1_stream_apply_post
+      parameters:
+      - name: _modes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: ' Modes'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamApplyRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    AsyncJobAccepted:
+      properties:
+        job_id:
+          type: string
+          title: Job Id
+        status:
+          type: string
+          title: Status
+          default: pending
+        poll_url:
+          type: string
+          title: Poll Url
+      type: object
+      required:
+      - job_id
+      - poll_url
+      title: AsyncJobAccepted
+      description: 202 response for accepted async jobs.
+    BleedMark:
+      properties:
+        type:
+          type: string
+          const: bleed
+          title: Type
+        anchor:
+          type: string
+          enum:
+          - bleed_top_left
+          - bleed_top_right
+          - bleed_bottom_left
+          - bleed_bottom_right
+          - bleed_corners
+          title: Anchor
+        length_pt:
+          anyOf:
+          - type: number
+          - $ref: '#/components/schemas/ExprValue'
+          title: Length Pt
+          default: 9.0
+        offset_pt:
+          type: number
+          minimum: 0.0
+          title: Offset Pt
+          default: 3.0
+        line_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Line Width Pt
+          default: 0.25
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - anchor
+      title: BleedMark
+      description: 'Bleed-extent corner indicator. Same shape as crop but anchored
+
+        against the bleed box.'
+    Body_marks_apply_multipart_v1_marks_apply_multipart_post:
+      properties:
+        input_pdf:
+          type: string
+          contentMediaType: application/octet-stream
+          title: Input Pdf
+          description: The input PDF.
+        template:
+          type: string
+          title: Template
+          description: JSON marks-template document.
+        externals:
+          items:
+            type: string
+            contentMediaType: application/octet-stream
+          type: array
+          title: Externals
+          description: External-file marks. Each file's name must match the ``file`` field of an external
+            mark in the template.
+          default: []
+        retain_for_training:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Retain For Training
+          description: Opt-in flag — 'true'/'1'/'yes' persists the call for training.
+      type: object
+      required:
+      - input_pdf
+      - template
+      title: Body_marks_apply_multipart_v1_marks_apply_multipart_post
+    BoxSetOp:
+      properties:
+        op:
+          type: string
+          const: box_set
+          title: Op
+        at_index:
+          type: integer
+          minimum: 0.0
+          title: At Index
+        box:
+          type: string
+          enum:
+          - TrimBox
+          - BleedBox
+          - ArtBox
+          - CropBox
+          - MediaBox
+          title: Box
+        rect_pt:
+          prefixItems:
+          - type: number
+          - type: number
+          - type: number
+          - type: number
+          type: array
+          maxItems: 4
+          minItems: 4
+          title: Rect Pt
+          description: (llx, lly, urx, ury) in points; must satisfy llx<urx, lly<ury.
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      - at_index
+      - box
+      - rect_pt
+      title: BoxSetOp
+    Cell:
+      properties:
+        width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Width Pt
+        height_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Height Pt
+      additionalProperties: false
+      type: object
+      required:
+      - width_pt
+      - height_pt
+      title: Cell
+      description: Per-cell dimensions in points (matches the input page TrimBox).
+    CenterMark:
+      properties:
+        type:
+          type: string
+          const: center
+          title: Type
+        anchor:
+          type: string
+          enum:
+          - trim_top
+          - trim_bottom
+          - trim_left
+          - trim_right
+          - trim_edges
+          title: Anchor
+        length_pt:
+          anyOf:
+          - type: number
+          - $ref: '#/components/schemas/ExprValue'
+          title: Length Pt
+          default: 9.0
+        line_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Line Width Pt
+          default: 0.25
+        offset_pt:
+          type: number
+          minimum: 0.0
+          title: Offset Pt
+          default: 3.0
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - anchor
+      title: CenterMark
+      description: 'Centerline tickmark — short line at the midpoint of one or more
+
+        trim edges. Used by sectional binding shops.'
+    CjdApplyResponse:
+      properties:
+        output_pdf_b64:
+          type: string
+          title: Output Pdf B64
+        output_pdf_sha256:
+          type: string
+          title: Output Pdf Sha256
+        lineage_id:
+          type: string
+          title: Lineage Id
+        steps:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Steps
+        trap_diff:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Trap Diff
+        schema_version:
+          type: string
+          title: Schema Version
+          default: 1.0.0
+        compile_version:
+          type: string
+          title: Compile Version
+          default: 0.1.1
+      additionalProperties: false
+      type: object
+      required:
+      - output_pdf_b64
+      - output_pdf_sha256
+      - lineage_id
+      - steps
+      title: CjdApplyResponse
+    CjdImposeStep:
+      properties:
+        type:
+          type: string
+          const: impose
+          title: Type
+        plan:
+          $ref: '#/components/schemas/ImposePlan'
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - plan
+      title: CjdImposeStep
+    CjdJob:
+      properties:
+        schema_version:
+          type: string
+          const: 1.0.0
+          title: Schema Version
+          description: Bumps when the CJD-document schema changes (per producer; spec §6.2).
+          default: 1.0.0
+        job_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Job Id
+          description: Operator-assigned job identifier. When omitted the orchestrator synthesizes a deterministic
+            ULID-style id from the input + steps.
+        input_pdf_b64:
+          type: string
+          minLength: 1
+          title: Input Pdf B64
+        steps:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/CjdRewriteStep'
+            - $ref: '#/components/schemas/CjdMarksStep'
+            - $ref: '#/components/schemas/CjdImposeStep'
+            - $ref: '#/components/schemas/CjdTrapStep'
+            discriminator:
+              propertyName: type
+              mapping:
+                impose: '#/components/schemas/CjdImposeStep'
+                marks: '#/components/schemas/CjdMarksStep'
+                rewrite: '#/components/schemas/CjdRewriteStep'
+                trap: '#/components/schemas/CjdTrapStep'
+          type: array
+          minItems: 1
+          title: Steps
+        strict_order:
+          type: boolean
+          title: Strict Order
+          description: When True, reject any step ordering that doesn't match the canonical rewrite→marks→impose→trap
+            order with a 422. When False (default), the orchestrator reorders silently.
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - input_pdf_b64
+      - steps
+      title: CjdJob
+      description: Top-level CJD document — schema-versioned envelope.
+    CjdMarksStep:
+      properties:
+        type:
+          type: string
+          const: marks
+          title: Type
+        template:
+          $ref: '#/components/schemas/MarksTemplate'
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - template
+      title: CjdMarksStep
+    CjdRewriteStep:
+      properties:
+        type:
+          type: string
+          const: rewrite
+          title: Type
+        plan:
+          $ref: '#/components/schemas/RewritePlan'
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - plan
+      title: CjdRewriteStep
+    CjdTrapStep:
+      properties:
+        type:
+          type: string
+          const: trap
+          title: Type
+        policy:
+          $ref: '#/components/schemas/TrapPolicy'
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - policy
+      title: CjdTrapStep
+    ColorBar:
+      properties:
+        type:
+          type: string
+          const: color_bar
+          title: Type
+        anchor:
+          type: string
+          enum:
+          - slug_top
+          - slug_bottom
+          - slug_left
+          - slug_right
+          title: Anchor
+        inks:
+          items:
+            type: string
+          type: array
+          minItems: 1
+          title: Inks
+        cell_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Cell Width Pt
+          default: 18.0
+        cell_height_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Cell Height Pt
+          default: 12.0
+        label:
+          type: boolean
+          title: Label
+          default: true
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - anchor
+      - inks
+      title: ColorBar
+      description: 'Process + spot-ink ladder. Each entry in ``inks`` becomes one
+
+        cell in the bar; cells render in declaration order along the slug
+
+        edge. Ink names are opaque labels stamped above each cell.'
+    ColorspaceSwapOp:
+      properties:
+        op:
+          type: string
+          const: colorspace_swap
+          title: Op
+        target:
+          type: string
+          enum:
+          - rgb
+          - cmyk
+          title: Target
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      - target
+      title: ColorspaceSwapOp
+    ContractResponse:
+      properties:
+        contract_name:
+          type: string
+          title: Contract Name
+        schema_version:
+          type: string
+          title: Schema Version
+        package_version:
+          type: string
+          title: Package Version
+        schema_id:
+          type: string
+          title: Schema Id
+        endpoints:
+          items:
+            type: string
+          type: array
+          title: Endpoints
+        producer_schema_versions:
+          additionalProperties:
+            type: string
+          type: object
+          title: Producer Schema Versions
+        codex_section_versions:
+          additionalProperties:
+            type: string
+          type: object
+          title: Codex Section Versions
+      type: object
+      required:
+      - contract_name
+      - schema_version
+      - package_version
+      - schema_id
+      - endpoints
+      title: ContractResponse
+    CropMark:
+      properties:
+        type:
+          type: string
+          const: crop
+          title: Type
+        anchor:
+          type: string
+          enum:
+          - trim_top_left
+          - trim_top_right
+          - trim_bottom_left
+          - trim_bottom_right
+          - trim_corners
+          title: Anchor
+        length_pt:
+          anyOf:
+          - type: number
+          - $ref: '#/components/schemas/ExprValue'
+          title: Length Pt
+          default: 9.0
+        offset_pt:
+          type: number
+          minimum: 0.0
+          title: Offset Pt
+          default: 3.0
+        line_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Line Width Pt
+          default: 0.25
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - anchor
+      title: CropMark
+      description: 'Trim-box corner indicator. Renders two short orthogonal ticks
+
+        starting ``offset_pt`` outside the trim corner.'
+    CustomShape:
+      properties:
+        type:
+          type: string
+          const: custom
+          title: Type
+        anchor:
+          type: string
+          enum:
+          - trim_top_left
+          - trim_top_right
+          - trim_bottom_left
+          - trim_bottom_right
+          - trim_top
+          - trim_bottom
+          - trim_left
+          - trim_right
+          - trim_center
+          - bleed_top_left
+          - bleed_top_right
+          - bleed_bottom_left
+          - bleed_bottom_right
+          - slug_top
+          - slug_bottom
+          - slug_left
+          - slug_right
+          title: Anchor
+        points:
+          items:
+            prefixItems:
+            - type: number
+            - type: number
+            type: array
+            maxItems: 2
+            minItems: 2
+          type: array
+          minItems: 2
+          title: Points
+        line_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Line Width Pt
+          default: 0.25
+        closed:
+          type: boolean
+          title: Closed
+          default: true
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - anchor
+      - points
+      title: CustomShape
+      description: 'Operator-defined polygon at an anchor. ``points`` are in points,
+
+        relative to the anchor origin (anchor is treated as (0, 0)). A
+
+        closed shape connects the last point back to the first.'
+    CutMark:
+      properties:
+        type:
+          type: string
+          const: cut
+          title: Type
+        anchor:
+          type: string
+          enum:
+          - trim_top_left
+          - trim_top_right
+          - trim_bottom_left
+          - trim_bottom_right
+          - trim_corners
+          title: Anchor
+        length_pt:
+          anyOf:
+          - type: number
+          - $ref: '#/components/schemas/ExprValue'
+          title: Length Pt
+          default: 9.0
+        offset_pt:
+          type: number
+          minimum: 0.0
+          title: Offset Pt
+          default: 3.0
+        line_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Line Width Pt
+          default: 0.25
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - anchor
+      title: CutMark
+      description: 'Shop-floor cut indicator — a single straight tick anchored at the
+
+        chosen corner, rendered ``offset_pt`` outside the trim and aimed
+
+        along the corner bisector.'
+    DeltaESummary:
+      properties:
+        max:
+          type: number
+          title: Max
+          description: Worst-case ΔE across the simulated raster.
+        avg:
+          type: number
+          title: Avg
+          description: Mean ΔE across the simulated raster.
+        p95:
+          type: number
+          title: P95
+          description: 95th percentile ΔE — the value below which 95% of sampled pixels sit. Useful because
+            ``max`` is often dominated by a single out-of-gamut speck.
+      additionalProperties: false
+      type: object
+      required:
+      - max
+      - avg
+      - p95
+      title: DeltaESummary
+      description: 'Aggregate ΔE stats returned alongside the simulated PDF.
+
+
+        The full per-pixel ΔE map is too heavy for the JSON envelope —
+
+        artwork-pdf editor renders it from a separately fetched
+
+        ImageData / PNG, not from this response. These three numbers
+
+        are enough to drive the footer chip on the soft-proof overlay.'
+    ExplicitPlacement:
+      properties:
+        source_ref:
+          type: string
+          title: Source Ref
+          description: Solver back-reference — sift's Job.id, optionally with a ':pageIdx' suffix. Informational
+            for the engine; carried into lineage so a placed cell can be traced to its source job.
+        x0_pt:
+          type: number
+          title: X0 Pt
+          description: Lower-left x of the cell box in sheet-space points.
+        y0_pt:
+          type: number
+          title: Y0 Pt
+          description: Lower-left y of the cell box in sheet-space points.
+        x1_pt:
+          type: number
+          title: X1 Pt
+          description: Upper-right x of the cell box in sheet-space points.
+        y1_pt:
+          type: number
+          title: Y1 Pt
+          description: Upper-right y of the cell box in sheet-space points.
+        rotation:
+          type: number
+          title: Rotation
+          description: Cell rotation in degrees, counter-clockwise (PDF convention).
+          default: 0.0
+        flip_h:
+          type: boolean
+          title: Flip H
+          description: Mirror the cell content about its vertical axis.
+          default: false
+        flip_v:
+          type: boolean
+          title: Flip V
+          description: Mirror the cell content about its horizontal axis.
+          default: false
+        row:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Row
+          description: Grid row index, informational. Optional — sift omits it for nest layouts.
+        col:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Col
+          description: Grid column index, informational. Optional — sift omits it for nest layouts.
+      additionalProperties: false
+      type: object
+      required:
+      - source_ref
+      - x0_pt
+      - y0_pt
+      - x1_pt
+      - y1_pt
+      title: ExplicitPlacement
+      description: 'One pre-solved cell position in sheet space.
+
+
+        Emitted by sift-pdf''s solver (stagger / gang / nest tiers) and
+
+        consumed by the impose engine when a uniform grid can''t express the
+
+        layout. The box (``x0_pt``/``y0_pt``/``x1_pt``/``y1_pt``) plus
+
+        ``rotation`` + ``flip_h`` / ``flip_v`` mirror codex''s ``CellPlacement``
+
+        vocabulary so the engine''s per-cell transform path is identical to
+
+        the grid path. Field names + types match sift-pdf''s handoff dict
+
+        (``sift_pdf.handoff.compile._explicit_plan``) exactly so the dict
+
+        validates without translation.'
+    ExprValue:
+      properties:
+        $expr:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: $Expr
+      additionalProperties: false
+      type: object
+      required:
+      - $expr
+      title: ExprValue
+      description: 'A deferred JS expression evaluated at render time against page geometry.
+
+
+        Example: ``{"$expr": "page.trim_width / 2"}``'
+    ExternalMark:
+      properties:
+        type:
+          type: string
+          const: external
+          title: Type
+        file:
+          type: string
+          minLength: 1
+          title: File
+        anchor:
+          type: string
+          enum:
+          - trim_top_left
+          - trim_top_right
+          - trim_bottom_left
+          - trim_bottom_right
+          - trim_top
+          - trim_bottom
+          - trim_left
+          - trim_right
+          - trim_center
+          - bleed_top_left
+          - bleed_top_right
+          - bleed_bottom_left
+          - bleed_bottom_right
+          - slug_top
+          - slug_bottom
+          - slug_left
+          - slug_right
+          title: Anchor
+        scale:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Scale
+          default: 1.0
+        dx_pt:
+          type: number
+          title: Dx Pt
+          default: 0.0
+        dy_pt:
+          type: number
+          title: Dy Pt
+          default: 0.0
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - file
+      - anchor
+      title: ExternalMark
+      description: 'Tenant-uploaded mark template — PDF or PNG stamped at the chosen
+
+        anchor. The file is referenced by relative path (resolved against
+
+        the request''s working directory by the engine).
+
+
+        PDF files: the first page is embedded as a Form XObject. PNG files:
+
+        the bitmap is embedded as an Image XObject and placed at native
+
+        resolution unless ``scale`` overrides. SVG support is deferred —
+
+        convert to PDF or PNG before submission.'
+    FoldMark:
+      properties:
+        type:
+          type: string
+          const: fold
+          title: Type
+        edge:
+          type: string
+          enum:
+          - top
+          - bottom
+          - left
+          - right
+          title: Edge
+        position_pt:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - $ref: '#/components/schemas/ExprValue'
+          title: Position Pt
+          description: Offset from the chosen edge into the trim, in points.
+          default: 0.0
+        length_pt:
+          anyOf:
+          - type: number
+          - $ref: '#/components/schemas/ExprValue'
+          title: Length Pt
+          default: 12.0
+        line_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Line Width Pt
+          default: 0.25
+        dash_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Dash Pt
+          default: 2.0
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - edge
+      title: FoldMark
+      description: 'Score / fold position indicator. Dashed line across the trim at
+
+        ``position_pt`` measured from the chosen edge.'
+    Gutter:
+      properties:
+        x_pt:
+          type: number
+          minimum: 0.0
+          title: X Pt
+          default: 0.0
+        y_pt:
+          type: number
+          minimum: 0.0
+          title: Y Pt
+          default: 0.0
+      additionalProperties: false
+      type: object
+      title: Gutter
+      description: Inter-cell spacing in points. Asymmetric x/y is supported.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    HealthResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+        version:
+          type: string
+          title: Version
+        producer:
+          type: string
+          title: Producer
+        instance_id:
+          type: string
+          title: Instance Id
+        cache_backend:
+          type: string
+          title: Cache Backend
+        queue_depth:
+          type: integer
+          title: Queue Depth
+          default: 0
+        celery_workers:
+          type: integer
+          title: Celery Workers
+          default: 0
+        ghostscript:
+          type: boolean
+          title: Ghostscript
+          default: false
+        codex_pdf_version:
+          type: string
+          title: Codex Pdf Version
+        codex_section_versions:
+          additionalProperties:
+            type: string
+          type: object
+          title: Codex Section Versions
+        codex_live_section_versions:
+          additionalProperties:
+            type: string
+          type: object
+          title: Codex Live Section Versions
+        version_skew:
+          type: boolean
+          title: Version Skew
+          default: false
+      type: object
+      required:
+      - status
+      - version
+      - producer
+      - instance_id
+      - cache_backend
+      - codex_pdf_version
+      title: HealthResponse
+    ImposeApplyRequest:
+      properties:
+        input_pdf_b64:
+          type: string
+          minLength: 1
+          title: Input Pdf B64
+        plan:
+          $ref: '#/components/schemas/ImposePlan'
+      additionalProperties: false
+      type: object
+      required:
+      - input_pdf_b64
+      - plan
+      title: ImposeApplyRequest
+      description: 'Request envelope: an inline base64-encoded PDF + a plan.'
+    ImposeApplyResponse:
+      properties:
+        output_pdf_b64:
+          type: string
+          title: Output Pdf B64
+        pdf_sha256:
+          type: string
+          title: Pdf Sha256
+        input_sha256:
+          type: string
+          title: Input Sha256
+        plan_sha256:
+          type: string
+          title: Plan Sha256
+        cache_key:
+          type: string
+          title: Cache Key
+        cache_hit:
+          type: boolean
+          title: Cache Hit
+          default: false
+        sheets_written:
+          type: integer
+          title: Sheets Written
+        cells_per_sheet:
+          type: integer
+          title: Cells Per Sheet
+        input_pages:
+          type: integer
+          title: Input Pages
+        schema_version:
+          type: string
+          title: Schema Version
+          default: 1.1.0
+        compile_version:
+          type: string
+          title: Compile Version
+          default: 0.1.1
+      additionalProperties: false
+      type: object
+      required:
+      - output_pdf_b64
+      - pdf_sha256
+      - input_sha256
+      - plan_sha256
+      - cache_key
+      - sheets_written
+      - cells_per_sheet
+      - input_pages
+      title: ImposeApplyResponse
+    ImposePlan:
+      properties:
+        schema_version:
+          type: string
+          const: 1.0.0
+          title: Schema Version
+          description: Bumps when the plan-document schema changes (per producer; spec §6.2).
+          default: 1.0.0
+        sheet:
+          $ref: '#/components/schemas/Sheet'
+        cell:
+          $ref: '#/components/schemas/Cell'
+        gutter:
+          $ref: '#/components/schemas/Gutter'
+        marks_zone:
+          $ref: '#/components/schemas/MarksZoneSpec'
+        cell_rotation:
+          type: integer
+          enum:
+          - 0
+          - 90
+          - 180
+          - 270
+          title: Cell Rotation
+          default: 0
+        flip_per_row:
+          type: boolean
+          title: Flip Per Row
+          default: false
+        bleed_pt:
+          type: number
+          minimum: 0.0
+          title: Bleed Pt
+          default: 0.0
+        bleed_handling:
+          type: string
+          enum:
+          - none
+          - trim
+          - extend
+          title: Bleed Handling
+          default: none
+        page_mapping:
+          type: string
+          enum:
+          - sequential
+          - repeat
+          title: Page Mapping
+          default: sequential
+        back_side:
+          type: string
+          enum:
+          - none
+          - work-and-turn
+          - work-and-tumble
+          title: Back Side
+          default: none
+        registration_marks:
+          type: boolean
+          title: Registration Marks
+          description: When true, place four-color registration targets in the reserved ``marks_zone``
+            corners. Wave 1 plumb-only — the engine accepts the field but mark rendering ships in a follow-up
+            once the upstream codex marks API stabilizes; until then the toggle round-trips through the
+            policy without producing visible output.
+          default: false
+        crop_marks:
+          type: boolean
+          title: Crop Marks
+          description: 'When true, place crop marks at the per-cell trim corners. Same plumb-only semantics
+            as ``registration_marks``: the schema carries the operator''s intent end-to-end for editor
+            UIs and lineage records, with engine rendering deferred to a follow-up.'
+          default: false
+        explicit_placements:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ExplicitPlacement'
+            type: array
+          - type: 'null'
+          title: Explicit Placements
+          description: Pre-solved sheet-space cell positions from an upstream solver (sift-pdf stagger
+            / gang / nest). When present, the engine places cells at these exact boxes instead of computing
+            a uniform grid via ``codex_pdf.geom.tile_grid``; the grid knobs (``gutter``, ``cell_rotation``,
+            ``flip_per_row``) are ignored. ``None`` (the default) preserves the prior grid behaviour exactly
+            — this field is purely additive.
+        stagger_mode:
+          type: string
+          enum:
+          - none
+          - half-drop-x
+          - half-drop-y
+          - custom
+          title: Stagger Mode
+          description: 'Records the solver''s stagger intent (half-drop / brick / custom) so it survives
+            into lineage. Informational for the engine: when ``explicit_placements`` is set the resolved
+            coordinates already carry the offset; this field preserves the *semantic* intent that would
+            otherwise be lost once positions are flattened. Defaults to ``none`` (uniform grid).'
+          default: none
+      additionalProperties: false
+      type: object
+      required:
+      - sheet
+      - cell
+      title: ImposePlan
+      description: 'Sheet-level step-and-repeat plan — schema-versioned, fully forward-
+
+        compatible with codex''s GEOM_SCHEMA_VERSION 1.1.0 surface.'
+    InkKeyBar:
+      properties:
+        type:
+          type: string
+          const: ink_key_bar
+          title: Type
+        anchor:
+          type: string
+          enum:
+          - slug_top
+          - slug_bottom
+          title: Anchor
+        zones:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Zones
+          default: 10
+        cell_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Cell Width Pt
+          default: 18.0
+        cell_height_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Cell Height Pt
+          default: 10.0
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - anchor
+      title: InkKeyBar
+      description: 'Densitometric step wedge — ``zones`` evenly-spaced cells along
+
+        the chosen slug edge. Each cell renders an outlined rectangle (no
+
+        fill — that is the operator''s responsibility once they assign
+
+        densities).'
+    InkPairRule:
+      properties:
+        from_ink:
+          type: string
+          minLength: 1
+          title: From Ink
+          description: Source ink name (PMS / process).
+        to_ink:
+          type: string
+          minLength: 1
+          title: To Ink
+          description: Adjacent ink name across the boundary.
+        width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Width Pt
+          description: Trap width in PDF points.
+        direction:
+          type: string
+          enum:
+          - spread
+          - choke
+          - auto
+          title: Direction
+          default: auto
+      additionalProperties: false
+      type: object
+      required:
+      - from_ink
+      - to_ink
+      - width_pt
+      title: InkPairRule
+      description: 'Per-ordered-ink-pair trap rule.
+
+
+        ``direction=''auto''`` defers to neutral-density defaults: the ink
+
+        with lower neutral density spreads into the one with higher (i.e.
+
+        the lighter spreads into the darker). When operator override is
+
+        explicit, ``direction`` is honored regardless of densities.'
+    LibrariesResponse:
+      properties:
+        libraries:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Libraries
+      additionalProperties: false
+      type: object
+      required:
+      - libraries
+      title: LibrariesResponse
+      description: Library enumeration response.
+    LineageListResponse:
+      properties:
+        lineage_ids:
+          items:
+            type: string
+          type: array
+          title: Lineage Ids
+      additionalProperties: false
+      type: object
+      required:
+      - lineage_ids
+      title: LineageListResponse
+    MarksApplyRequest:
+      properties:
+        input_pdf_b64:
+          type: string
+          minLength: 1
+          title: Input Pdf B64
+        template:
+          $ref: '#/components/schemas/MarksTemplate'
+      additionalProperties: false
+      type: object
+      required:
+      - input_pdf_b64
+      - template
+      title: MarksApplyRequest
+      description: 'Request envelope: an inline base64-encoded PDF + a template.
+
+
+        Bytes-in / bytes-out. Lineage records persist to the configured S3
+
+        bucket asynchronously and are addressable by the returned
+
+        ``cache_key`` (Phase 5 lights up the actual store).
+
+
+        External-file marks are not supported through the inline JSON
+
+        transport — they require a multipart upload variant (Phase 2.x).
+
+        Templates that include ``{"type": "external", ...}`` are rejected
+
+        here with ``422 external_marks_not_supported_inline``.'
+    MarksApplyResponse:
+      properties:
+        output_pdf_b64:
+          type: string
+          title: Output Pdf B64
+        pdf_sha256:
+          type: string
+          title: Pdf Sha256
+        input_sha256:
+          type: string
+          title: Input Sha256
+        template_sha256:
+          type: string
+          title: Template Sha256
+        cache_key:
+          type: string
+          title: Cache Key
+        cache_hit:
+          type: boolean
+          title: Cache Hit
+          default: false
+        marks_applied:
+          type: integer
+          title: Marks Applied
+        schema_version:
+          type: string
+          title: Schema Version
+          default: 1.1.0
+        compile_version:
+          type: string
+          title: Compile Version
+          default: 0.1.1
+      additionalProperties: false
+      type: object
+      required:
+      - output_pdf_b64
+      - pdf_sha256
+      - input_sha256
+      - template_sha256
+      - cache_key
+      - marks_applied
+      title: MarksApplyResponse
+    MarksTemplate:
+      properties:
+        schema_version:
+          type: string
+          const: 1.0.0
+          title: Schema Version
+          description: Bumps when the template-document schema changes (per producer; spec §6.2).
+          default: 1.0.0
+        marks:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/RegisterMark'
+            - $ref: '#/components/schemas/CropMark'
+            - $ref: '#/components/schemas/BleedMark'
+            - $ref: '#/components/schemas/ColorBar'
+            - $ref: '#/components/schemas/FoldMark'
+            - $ref: '#/components/schemas/CenterMark'
+            - $ref: '#/components/schemas/SlugText'
+            - $ref: '#/components/schemas/ProofSlug'
+            - $ref: '#/components/schemas/CutMark'
+            - $ref: '#/components/schemas/InkKeyBar'
+            - $ref: '#/components/schemas/TileStitchMark'
+            - $ref: '#/components/schemas/StepRepeatMark'
+            - $ref: '#/components/schemas/CustomShape'
+            - $ref: '#/components/schemas/ExternalMark'
+            discriminator:
+              propertyName: type
+              mapping:
+                bleed: '#/components/schemas/BleedMark'
+                center: '#/components/schemas/CenterMark'
+                color_bar: '#/components/schemas/ColorBar'
+                crop: '#/components/schemas/CropMark'
+                custom: '#/components/schemas/CustomShape'
+                cut: '#/components/schemas/CutMark'
+                external: '#/components/schemas/ExternalMark'
+                fold: '#/components/schemas/FoldMark'
+                ink_key_bar: '#/components/schemas/InkKeyBar'
+                proof_slug: '#/components/schemas/ProofSlug'
+                register: '#/components/schemas/RegisterMark'
+                slug_text: '#/components/schemas/SlugText'
+                step_repeat: '#/components/schemas/StepRepeatMark'
+                tile_stitch: '#/components/schemas/TileStitchMark'
+          type: array
+          title: Marks
+      additionalProperties: false
+      type: object
+      title: MarksTemplate
+      description: 'Top-level marks-template document — schema-versioned, ordered list
+
+        of marks. Marks render in declaration order; later marks paint over
+
+        earlier marks at the same coordinates.'
+    MarksZoneSpec:
+      properties:
+        top_pt:
+          type: number
+          minimum: 0.0
+          title: Top Pt
+          default: 0.0
+        right_pt:
+          type: number
+          minimum: 0.0
+          title: Right Pt
+          default: 0.0
+        bottom_pt:
+          type: number
+          minimum: 0.0
+          title: Bottom Pt
+          default: 0.0
+        left_pt:
+          type: number
+          minimum: 0.0
+          title: Left Pt
+          default: 0.0
+      additionalProperties: false
+      type: object
+      title: MarksZoneSpec
+      description: 'Reserved sheet margins consumed by the marks layer (slug, color
+
+        bars, etc.). Forwarded into ``codex_pdf.geom.MarksZone`` at engine
+
+        time. The ``Spec`` suffix avoids shadowing the Codex type — the
+
+        consume-surface audit flags any Compile-side class that re-declares
+
+        a Codex type name.'
+    MetadataSetOp:
+      properties:
+        op:
+          type: string
+          const: metadata_set
+          title: Op
+        key:
+          type: string
+          enum:
+          - Title
+          - Author
+          - Subject
+          - Keywords
+          - Creator
+          - Producer
+          - CreationDate
+          - ModDate
+          title: Key
+        value:
+          type: string
+          title: Value
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      - key
+      - value
+      title: MetadataSetOp
+    MetadataStripOp:
+      properties:
+        op:
+          type: string
+          const: metadata_strip
+          title: Op
+        keys:
+          items:
+            type: string
+            enum:
+            - Title
+            - Author
+            - Subject
+            - Keywords
+            - Creator
+            - Producer
+            - CreationDate
+            - ModDate
+          type: array
+          minItems: 1
+          title: Keys
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      - keys
+      title: MetadataStripOp
+    NormalizePageTreeOp:
+      properties:
+        op:
+          type: string
+          const: normalize_page_tree
+          title: Op
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      title: NormalizePageTreeOp
+    OcgFlipOp:
+      properties:
+        op:
+          type: string
+          const: ocg_flip
+          title: Op
+        layer:
+          type: string
+          minLength: 1
+          title: Layer
+          description: OCG layer name (matches CodexOCG.name).
+        visible:
+          type: boolean
+          title: Visible
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      - layer
+      - visible
+      title: OcgFlipOp
+    PageDeleteOp:
+      properties:
+        op:
+          type: string
+          const: page_delete
+          title: Op
+        at_index:
+          type: integer
+          minimum: 0.0
+          title: At Index
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      - at_index
+      title: PageDeleteOp
+    PageInsertOp:
+      properties:
+        op:
+          type: string
+          const: page_insert
+          title: Op
+        at_index:
+          type: integer
+          minimum: 0.0
+          title: At Index
+          description: 0-based index where the new page is inserted.
+        width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Width Pt
+        height_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Height Pt
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      - at_index
+      - width_pt
+      - height_pt
+      title: PageInsertOp
+    PageLabelSetOp:
+      properties:
+        op:
+          type: string
+          const: page_label_set
+          title: Op
+        start_index:
+          type: integer
+          minimum: 0.0
+          title: Start Index
+          description: 0-based index where this label range begins.
+        style:
+          type: string
+          enum:
+          - D
+          - R
+          - r
+          - A
+          - a
+          - none
+          title: Style
+          description: 'PDF page-label style: D (decimal), R/r (Roman upper/lower), A/a (alpha upper/lower),
+            or ''none'' to drop the entry.'
+        prefix:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prefix
+        start:
+          type: integer
+          minimum: 1.0
+          title: Start
+          default: 1
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      - start_index
+      - style
+      title: PageLabelSetOp
+    PageReorderOp:
+      properties:
+        op:
+          type: string
+          const: page_reorder
+          title: Op
+        order:
+          items:
+            type: integer
+            minimum: 0.0
+          type: array
+          minItems: 1
+          title: Order
+          description: Permutation of original page indices. Length must equal page count.
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      - order
+      title: PageReorderOp
+    PageRotateOp:
+      properties:
+        op:
+          type: string
+          const: page_rotate
+          title: Op
+        at_index:
+          type: integer
+          minimum: 0.0
+          title: At Index
+        degrees:
+          type: integer
+          enum:
+          - 0
+          - 90
+          - 180
+          - 270
+          title: Degrees
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      - at_index
+      - degrees
+      title: PageRotateOp
+    PdfxPinOp:
+      properties:
+        op:
+          type: string
+          const: pdfx_pin
+          title: Op
+        level:
+          type: string
+          enum:
+          - PDF/X-1a
+          - PDF/X-3
+          - PDF/X-4
+          - PDF/X-6
+          - none
+          title: Level
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      - level
+      title: PdfxPinOp
+    ProducerCreatorStampOp:
+      properties:
+        op:
+          type: string
+          const: producer_creator_stamp
+          title: Op
+        producer:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Producer
+        creator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Creator
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      title: ProducerCreatorStampOp
+    ProofSlug:
+      properties:
+        type:
+          type: string
+          const: proof_slug
+          title: Type
+        inset_pt:
+          type: number
+          minimum: 0.0
+          title: Inset Pt
+          default: 0.0
+        line_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Line Width Pt
+          default: 0.5
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      title: ProofSlug
+      description: 'Single-cell proofing border — rectangle outlining the trim with
+
+        a configurable inset. One per page.'
+    RegisterMark:
+      properties:
+        type:
+          type: string
+          const: register
+          title: Type
+        anchor:
+          type: string
+          enum:
+          - trim_top_left
+          - trim_top_right
+          - trim_bottom_left
+          - trim_bottom_right
+          - trim_corners
+          title: Anchor
+        offset_pt:
+          type: number
+          minimum: 0.0
+          title: Offset Pt
+          default: 6.0
+        line_length_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Line Length Pt
+          default: 6.0
+        line_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Line Width Pt
+          default: 0.25
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - anchor
+      title: RegisterMark
+      description: 'Cross-hair register mark — corner alignment target for plate
+
+        registration. Renders a ``+`` centered ``offset_pt`` outside the
+
+        chosen trim corner.'
+    RetentionDeleteRequest:
+      properties:
+        sha256:
+          type: string
+          maxLength: 64
+          minLength: 64
+          pattern: ^[0-9a-fA-F]{64}$
+          title: Sha256
+      additionalProperties: false
+      type: object
+      required:
+      - sha256
+      title: RetentionDeleteRequest
+    RetentionDeleteResponse:
+      properties:
+        deleted:
+          type: integer
+          title: Deleted
+        keys:
+          items:
+            type: string
+          type: array
+          title: Keys
+      additionalProperties: false
+      type: object
+      required:
+      - deleted
+      - keys
+      title: RetentionDeleteResponse
+    RewriteApplyRequest:
+      properties:
+        input_pdf_b64:
+          type: string
+          minLength: 1
+          title: Input Pdf B64
+        plan:
+          $ref: '#/components/schemas/RewritePlan'
+      additionalProperties: false
+      type: object
+      required:
+      - input_pdf_b64
+      - plan
+      title: RewriteApplyRequest
+      description: 'Request envelope: an inline base64-encoded PDF + a plan.
+
+
+        Bytes-in / bytes-out. Lineage records persist to the configured S3
+
+        bucket asynchronously and are addressable by the returned
+
+        ``cache_key`` (Phase 5 lights up the actual store).'
+    RewriteApplyResponse:
+      properties:
+        output_pdf_b64:
+          type: string
+          title: Output Pdf B64
+        pdf_sha256:
+          type: string
+          title: Pdf Sha256
+        input_sha256:
+          type: string
+          title: Input Sha256
+        plan_sha256:
+          type: string
+          title: Plan Sha256
+        cache_key:
+          type: string
+          title: Cache Key
+        cache_hit:
+          type: boolean
+          title: Cache Hit
+          default: false
+        ops_applied:
+          type: integer
+          title: Ops Applied
+        schema_version:
+          type: string
+          title: Schema Version
+          default: 1.0.0
+        compile_version:
+          type: string
+          title: Compile Version
+          default: 0.1.1
+      additionalProperties: false
+      type: object
+      required:
+      - output_pdf_b64
+      - pdf_sha256
+      - input_sha256
+      - plan_sha256
+      - cache_key
+      - ops_applied
+      title: RewriteApplyResponse
+      description: 'Response envelope. Output bytes are returned base64 so the
+
+        transport stays JSON; bypassed by the streaming variant in Phase 1.x.'
+    RewritePlan:
+      properties:
+        schema_version:
+          type: string
+          const: 1.0.0
+          title: Schema Version
+          description: Bumps when the plan-document schema changes (per producer; spec §6.2).
+          default: 1.0.0
+        ops:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OcgFlipOp'
+            - $ref: '#/components/schemas/PageInsertOp'
+            - $ref: '#/components/schemas/PageDeleteOp'
+            - $ref: '#/components/schemas/PageReorderOp'
+            - $ref: '#/components/schemas/PageRotateOp'
+            - $ref: '#/components/schemas/BoxSetOp'
+            - $ref: '#/components/schemas/PageLabelSetOp'
+            - $ref: '#/components/schemas/NormalizePageTreeOp'
+            - $ref: '#/components/schemas/MetadataSetOp'
+            - $ref: '#/components/schemas/MetadataStripOp'
+            - $ref: '#/components/schemas/ColorspaceSwapOp'
+            - $ref: '#/components/schemas/StripJavascriptOp'
+            - $ref: '#/components/schemas/StripEmbeddedFilesOp'
+            - $ref: '#/components/schemas/PdfxPinOp'
+            - $ref: '#/components/schemas/ProducerCreatorStampOp'
+            discriminator:
+              propertyName: op
+              mapping:
+                box_set: '#/components/schemas/BoxSetOp'
+                colorspace_swap: '#/components/schemas/ColorspaceSwapOp'
+                metadata_set: '#/components/schemas/MetadataSetOp'
+                metadata_strip: '#/components/schemas/MetadataStripOp'
+                normalize_page_tree: '#/components/schemas/NormalizePageTreeOp'
+                ocg_flip: '#/components/schemas/OcgFlipOp'
+                page_delete: '#/components/schemas/PageDeleteOp'
+                page_insert: '#/components/schemas/PageInsertOp'
+                page_label_set: '#/components/schemas/PageLabelSetOp'
+                page_reorder: '#/components/schemas/PageReorderOp'
+                page_rotate: '#/components/schemas/PageRotateOp'
+                pdfx_pin: '#/components/schemas/PdfxPinOp'
+                producer_creator_stamp: '#/components/schemas/ProducerCreatorStampOp'
+                strip_embedded_files: '#/components/schemas/StripEmbeddedFilesOp'
+                strip_javascript: '#/components/schemas/StripJavascriptOp'
+          type: array
+          title: Ops
+      additionalProperties: false
+      type: object
+      title: RewritePlan
+      description: 'A rewrite plan — schema-versioned, ordered list of operations.
+
+
+        Operations execute in order; later ops see the document state produced
+
+        by earlier ops.'
+    SearchResponse:
+      properties:
+        results:
+          items:
+            $ref: '#/components/schemas/SpotEntry'
+          type: array
+          title: Results
+        total:
+          type: integer
+          title: Total
+          description: Number of catalogue entries that matched the query (pre-limit).
+        limit:
+          type: integer
+          title: Limit
+      additionalProperties: false
+      type: object
+      required:
+      - results
+      - total
+      - limit
+      title: SearchResponse
+      description: Search response envelope.
+    SeparationEntry:
+      properties:
+        name:
+          type: string
+          title: Name
+        color_space:
+          type: string
+          title: Color Space
+          description: One of "Separation", "DeviceN".
+        occurs_on_pages:
+          items:
+            type: integer
+          type: array
+          title: Occurs On Pages
+          description: 0-indexed page numbers on which this ink appears.
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - color_space
+      - occurs_on_pages
+      title: SeparationEntry
+      description: One named ink found in the input PDF.
+    SeparationsListRequest:
+      properties:
+        input_pdf_b64:
+          type: string
+          minLength: 1
+          title: Input Pdf B64
+          description: Base64-encoded PDF bytes.
+      additionalProperties: false
+      type: object
+      required:
+      - input_pdf_b64
+      title: SeparationsListRequest
+      description: Request envelope for ``POST /v1/separations/list``.
+    SeparationsListResponse:
+      properties:
+        separations:
+          items:
+            $ref: '#/components/schemas/SeparationEntry'
+          type: array
+          title: Separations
+        total:
+          type: integer
+          title: Total
+          description: Number of distinct named inks discovered.
+      additionalProperties: false
+      type: object
+      required:
+      - separations
+      - total
+      title: SeparationsListResponse
+      description: Response envelope for ``POST /v1/separations/list``.
+    Sheet:
+      properties:
+        width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Width Pt
+        height_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Height Pt
+      additionalProperties: false
+      type: object
+      required:
+      - width_pt
+      - height_pt
+      title: Sheet
+      description: Output sheet dimensions in points.
+    SlugText:
+      properties:
+        type:
+          type: string
+          const: slug_text
+          title: Type
+        anchor:
+          type: string
+          enum:
+          - slug_top
+          - slug_bottom
+          title: Anchor
+        text:
+          anyOf:
+          - type: string
+          - $ref: '#/components/schemas/ExprValue'
+          title: Text
+        font_size_pt:
+          anyOf:
+          - type: number
+          - $ref: '#/components/schemas/ExprValue'
+          title: Font Size Pt
+          default: 8.0
+        offset_pt:
+          type: number
+          minimum: 0.0
+          title: Offset Pt
+          default: 3.0
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - anchor
+      - text
+      title: SlugText
+      description: 'Operator metadata strip — single line of text along the slug.
+
+        Font is the standard PDF Helvetica face (no embedding).'
+    SoftProofApplyRequest:
+      properties:
+        input_pdf_b64:
+          type: string
+          minLength: 1
+          title: Input Pdf B64
+        source_icc_b64:
+          type: string
+          minLength: 1
+          title: Source Icc B64
+          description: Source ICC profile bytes, base64-encoded.
+        destination_icc_b64:
+          type: string
+          minLength: 1
+          title: Destination Icc B64
+          description: Destination ICC profile bytes, base64-encoded.
+        options:
+          $ref: '#/components/schemas/SoftProofOptions'
+      additionalProperties: false
+      type: object
+      required:
+      - input_pdf_b64
+      - source_icc_b64
+      - destination_icc_b64
+      title: SoftProofApplyRequest
+      description: 'Request envelope.
+
+
+        The two ICC profiles are passed inline as base64 so callers
+
+        don''t need to upload them ahead of time; the engine hashes
+
+        each profile''s bytes into the cache key so subsequent
+
+        identical requests hit cache.'
+    SoftProofApplyResponse:
+      properties:
+        output_pdf_b64:
+          type: string
+          title: Output Pdf B64
+        pdf_sha256:
+          type: string
+          title: Pdf Sha256
+        input_sha256:
+          type: string
+          title: Input Sha256
+        options_sha256:
+          type: string
+          title: Options Sha256
+        source_icc_sha256:
+          type: string
+          title: Source Icc Sha256
+        destination_icc_sha256:
+          type: string
+          title: Destination Icc Sha256
+        cache_key:
+          type: string
+          title: Cache Key
+        cache_hit:
+          type: boolean
+          title: Cache Hit
+          default: false
+        delta_e:
+          $ref: '#/components/schemas/DeltaESummary'
+        schema_version:
+          type: string
+          title: Schema Version
+        compile_version:
+          type: string
+          title: Compile Version
+      additionalProperties: false
+      type: object
+      required:
+      - output_pdf_b64
+      - pdf_sha256
+      - input_sha256
+      - options_sha256
+      - source_icc_sha256
+      - destination_icc_sha256
+      - cache_key
+      - delta_e
+      - schema_version
+      - compile_version
+      title: SoftProofApplyResponse
+      description: 'Response envelope.
+
+
+        Field names mirror the trap / impose / marks producers so
+
+        operator tooling can treat every producer''s response the same
+
+        way (lineage extraction, cache-key recording, etc.).'
+    SoftProofOptions:
+      properties:
+        intent:
+          type: string
+          enum:
+          - perceptual
+          - relative-colorimetric
+          - saturation
+          - absolute-colorimetric
+          title: Intent
+          description: ICC rendering intent applied during the simulation. Defaults to relative-colorimetric
+            — the conventional choice for print soft-proofing because it preserves in-gamut colours and
+            clips out-of-gamut ones.
+          default: relative-colorimetric
+        black_point_compensation:
+          type: boolean
+          title: Black Point Compensation
+          description: Apply black-point compensation. Almost always desired for print proofing; exposed
+            because Wave 2 PR-6's C5 overlay surfaces it as a checkbox in the soft-proof controls.
+          default: true
+        delta_e_formula:
+          type: string
+          enum:
+          - cie76
+          - cie94
+          - ciede2000
+          title: Delta E Formula
+          description: Distance formula used when computing the per-pixel ΔE summary. CIEDE2000 is the
+            modern default; CIE76 is retained for parity with legacy proofing reports.
+          default: ciede2000
+      additionalProperties: false
+      type: object
+      title: SoftProofOptions
+      description: 'Per-request options for the soft-proof simulation.
+
+
+        These are the knobs an artwork-pdf editor host might want to
+
+        expose; profile bytes themselves live on the surrounding
+
+        request envelope so the cache key can hash them independently
+
+        from the rest of the options object.'
+    SpotEntry:
+      properties:
+        name:
+          type: string
+          title: Name
+        library:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Library
+        lab:
+          anyOf:
+          - prefixItems:
+            - type: number
+            - type: number
+            - type: number
+            type: array
+            maxItems: 3
+            minItems: 3
+          - type: 'null'
+          title: Lab
+        cmyk_bridge:
+          anyOf:
+          - prefixItems:
+            - type: number
+            - type: number
+            - type: number
+            - type: number
+            type: array
+            maxItems: 4
+            minItems: 4
+          - type: 'null'
+          title: Cmyk Bridge
+        lab_source:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Lab Source
+        cmyk_source:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cmyk Source
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: SpotEntry
+      description: 'Wire shape for one PANTONE entry. Mirrors
+
+        :class:`codex_pdf.color.PantoneEntry` but as a Pydantic model so
+
+        FastAPI can validate the response envelope.'
+    StepRepeatMark:
+      properties:
+        type:
+          type: string
+          const: step_repeat
+          title: Type
+        rows:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Rows
+          default: 1
+        cols:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Cols
+          default: 1
+        gutter_pt:
+          type: number
+          minimum: 0.0
+          title: Gutter Pt
+          default: 0.0
+        stagger:
+          type: string
+          enum:
+          - none
+          - half_drop
+          - brick
+          title: Stagger
+          default: none
+        tick_length_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Tick Length Pt
+          default: 9.0
+        offset_pt:
+          type: number
+          minimum: 0.0
+          title: Offset Pt
+          default: 3.0
+        line_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Line Width Pt
+          default: 0.25
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      title: StepRepeatMark
+      description: 'Step-and-repeat (SNR) cut marks for a ganged sheet — cut ticks at the
+
+        boundaries between repeated cells, on all four sides of the trim.
+
+
+        ``rows`` x ``cols`` cells tile the trim box, separated by ``gutter_pt``.
+
+        ``stagger`` follows a *half-drop* (alternating columns dropped by half a
+
+        cell) or *brick* (alternating rows shifted right by half a cell)
+
+        step-and-repeat, so the edge cut marks land where the staggered cells
+
+        actually cut: brick shifts the top-edge ticks by half a cell (the top row''s
+
+        offset); half-drop shifts the right-edge ticks (the last column''s drop).
+
+        Cell tiling is plain arithmetic on the trim ``Box`` — no codex hop needed.'
+    StreamApplyRequest:
+      properties:
+        producer:
+          type: string
+          enum:
+          - rewrite
+          - marks
+          - impose
+          - trap
+          - soft_proof
+          title: Producer
+          description: 'Which producer''s engine to invoke. Must be one of: rewrite, marks, impose, trap,
+            soft_proof.'
+        payload:
+          additionalProperties: true
+          type: object
+          title: Payload
+          description: The underlying producer's request body, identical to what you would POST to /v1/{producer}/apply.
+      additionalProperties: false
+      type: object
+      required:
+      - producer
+      - payload
+      title: StreamApplyRequest
+      description: 'Envelope POSTed to ``/v1/stream/apply``.
+
+
+        Tagged-union discrimination on the ``producer`` field routes to
+
+        one of the per-producer payload models. Pydantic enforces the
+
+        payload matches the named producer''s request schema.'
+    StripEmbeddedFilesOp:
+      properties:
+        op:
+          type: string
+          const: strip_embedded_files
+          title: Op
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      title: StripEmbeddedFilesOp
+    StripJavascriptOp:
+      properties:
+        op:
+          type: string
+          const: strip_javascript
+          title: Op
+      additionalProperties: false
+      type: object
+      required:
+      - op
+      title: StripJavascriptOp
+    TileStitchMark:
+      properties:
+        type:
+          type: string
+          const: tile_stitch
+          title: Type
+        edge:
+          type: string
+          enum:
+          - top
+          - bottom
+          - left
+          - right
+          title: Edge
+        pitch_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Pitch Pt
+          default: 72.0
+        length_pt:
+          anyOf:
+          - type: number
+          - $ref: '#/components/schemas/ExprValue'
+          title: Length Pt
+          default: 6.0
+        line_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Line Width Pt
+          default: 0.25
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - edge
+      title: TileStitchMark
+      description: 'Large-format stitching guide — repeated small tickmarks along the
+
+        chosen edge at a fixed pitch.'
+    TrapApplyRequest:
+      properties:
+        input_pdf_b64:
+          type: string
+          minLength: 1
+          title: Input Pdf B64
+        policy:
+          $ref: '#/components/schemas/TrapPolicy'
+      additionalProperties: false
+      type: object
+      required:
+      - input_pdf_b64
+      - policy
+      title: TrapApplyRequest
+      description: 'Request envelope: an inline base64-encoded PDF + a trap policy.'
+    TrapApplyResponse:
+      properties:
+        output_pdf_b64:
+          type: string
+          title: Output Pdf B64
+        pdf_sha256:
+          type: string
+          title: Pdf Sha256
+        input_sha256:
+          type: string
+          title: Input Sha256
+        policy_sha256:
+          type: string
+          title: Policy Sha256
+        cache_key:
+          type: string
+          title: Cache Key
+        cache_hit:
+          type: boolean
+          title: Cache Hit
+          default: false
+        engine:
+          type: string
+          title: Engine
+        engine_fingerprint:
+          type: string
+          title: Engine Fingerprint
+        operations_count:
+          type: integer
+          title: Operations Count
+        trap_diff:
+          additionalProperties: true
+          type: object
+          title: Trap Diff
+        trap_findings:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Trap Findings
+          description: One CodexFinding per trap operation — ecosystem-consumable detection records.
+        schema_version:
+          type: string
+          title: Schema Version
+          default: 1.0.0
+        compile_version:
+          type: string
+          title: Compile Version
+          default: 0.1.1
+      additionalProperties: false
+      type: object
+      required:
+      - output_pdf_b64
+      - pdf_sha256
+      - input_sha256
+      - policy_sha256
+      - cache_key
+      - engine
+      - engine_fingerprint
+      - operations_count
+      - trap_diff
+      title: TrapApplyResponse
+    TrapPolicy:
+      properties:
+        schema_version:
+          type: string
+          const: 1.0.0
+          title: Schema Version
+          description: Bumps when the policy-document schema changes (per producer; spec §6.2).
+          default: 1.0.0
+        default_trap_width_pt:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Default Trap Width Pt
+          default: 0.144
+        ink_pair_rules:
+          items:
+            $ref: '#/components/schemas/InkPairRule'
+          type: array
+          title: Ink Pair Rules
+        trap_zones:
+          items:
+            $ref: '#/components/schemas/TrapZone'
+          type: array
+          title: Trap Zones
+        delta_e_tolerance:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Delta E Tolerance
+          description: Max acceptable CIEDE2000 delta_e between the trapping ink and either ink pair partner.
+            Operations exceeding tolerance fail verify Layer 6 but still emit a diff record.
+          default: 5.0
+        neutral_density_source:
+          type: string
+          enum:
+          - codex_extract
+          - operator
+          title: Neutral Density Source
+          description: Source for per-ink neutral density used to resolve 'auto' spread/choke direction.
+            'codex_extract' uses Lab L* values from the codex spot-color resolver (including AI Lab enrichment
+            for unknown inks). 'operator' requires explicit direction on all ink_pair_rules; 'auto' pairs
+            with no rule fall back to RGB-luminance approximation.
+          default: codex_extract
+        spread_choke:
+          type: string
+          enum:
+          - auto
+          - spread
+          - choke
+          title: Spread Choke
+          description: Global spread/choke default applied to all zones whose ink_pair_rule direction
+            is 'auto' (or that have no ink_pair_rule). 'auto' defers to neutral-density logic (lighter
+            ink spreads). 'spread' or 'choke' forces the direction for all auto-resolved pairs — useful
+            when the operator knows their press always spreads or always chokes regardless of density.
+          default: auto
+        engine:
+          type: string
+          enum:
+          - auto
+          - pure_python
+          - ghostscript
+          - external
+          title: Engine
+          description: auto → COMPILE_TRAP_ENGINE env var → pure_python. Override only when the operator
+            wants a specific engine fingerprint locked into the lineage record.
+          default: auto
+        output_trap_layer:
+          type: boolean
+          title: Output Trap Layer
+          description: When true, wrap trap content in an OCG named 'Traps' so PDF viewers can toggle
+            the layer on/off.
+          default: true
+        trap_zones_source:
+          type: string
+          enum:
+          - policy
+          - codex_extract
+          title: Trap Zones Source
+          description: When 'codex_extract', fetch AI-detected ink-boundary candidates from the codex
+            document identified by codex_job_id and merge them into the effective zone list. Declared
+            trap_zones still augment/override codex zones. Requires codex_job_id to be set.
+          default: policy
+        codex_job_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Codex Job Id
+          description: 'Codex document_id to read trap_zone_candidates from when trap_zones_source=''codex_extract''.
+            The codex API URL is resolved from CODEX_API_URL (default: http://localhost:8001).'
+        auto_detect_zones:
+          type: boolean
+          title: Auto Detect Zones
+          description: When true and no trap zones remain after all other resolution (policy declaration
+            + codex_extract), automatically detect candidate ink-adjacency zones from the PDF's content
+            stream using the conservative extractor. Set false to suppress auto-detection and run only
+            against explicitly declared zones.
+          default: true
+      additionalProperties: false
+      type: object
+      title: TrapPolicy
+      description: Top-level trap-policy document — schema-versioned envelope.
+    TrapPreviewResponse:
+      properties:
+        input_sha256:
+          type: string
+          title: Input Sha256
+        policy_sha256:
+          type: string
+          title: Policy Sha256
+        cache_key:
+          type: string
+          title: Cache Key
+        engine:
+          type: string
+          title: Engine
+        engine_fingerprint:
+          type: string
+          title: Engine Fingerprint
+        operations_count:
+          type: integer
+          title: Operations Count
+        trap_diff:
+          additionalProperties: true
+          type: object
+          title: Trap Diff
+        trap_findings:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Trap Findings
+          description: Same shape as TrapApplyResponse.trap_findings — one CodexFinding per operation.
+        schema_version:
+          type: string
+          title: Schema Version
+          default: 1.0.0
+        compile_version:
+          type: string
+          title: Compile Version
+          default: 0.1.1
+      additionalProperties: false
+      type: object
+      required:
+      - input_sha256
+      - policy_sha256
+      - cache_key
+      - engine
+      - engine_fingerprint
+      - operations_count
+      - trap_diff
+      title: TrapPreviewResponse
+      description: 'Metadata-only sibling of :class:`TrapApplyResponse` — what the
+
+        ``POST /v1/trap/preview`` endpoint returns.
+
+
+        Same trap-analysis fields, no ``output_pdf_b64`` / ``pdf_sha256``. Used by
+
+        D1 (artwork-pdf editor''s background trap-preview overlay) to display where
+
+        traps will land without paying the PDF egress cost on every change.'
+    TrapZone:
+      properties:
+        page_index:
+          type: integer
+          minimum: 0.0
+          title: Page Index
+        rect_pt:
+          anyOf:
+          - prefixItems:
+            - type: number
+            - type: number
+            - type: number
+            - type: number
+            type: array
+            maxItems: 4
+            minItems: 4
+          - type: 'null'
+          title: Rect Pt
+          description: (llx, lly, urx, ury) in points; must satisfy llx<urx, lly<ury.
+        polygon_pt:
+          anyOf:
+          - items:
+              prefixItems:
+              - type: number
+              - type: number
+              type: array
+              maxItems: 2
+              minItems: 2
+            type: array
+          - type: 'null'
+          title: Polygon Pt
+          description: Closed CCW ring of (x, y) vertices in PDF points. At least three vertices required;
+            the engine implicitly closes the ring back to the first vertex.
+        from_ink:
+          type: string
+          minLength: 1
+          title: From Ink
+        to_ink:
+          type: string
+          minLength: 1
+          title: To Ink
+      additionalProperties: false
+      type: object
+      required:
+      - page_index
+      - from_ink
+      - to_ink
+      title: TrapZone
+      description: "One trap target on a specific page.\n\nTwo shapes are supported:\n\n* **Rectangle**\
+        \ — set ``rect_pt`` only. The engine uses codex's\n  polygon_offset fast-path (no pyclipr required).\n\
+        * **Polygon** — set ``polygon_pt`` to a closed counter-clockwise\n  ring of ``(x, y)`` vertices\
+        \ in PDF points. The engine routes the\n  offset through ``compile_pdf.trap._geom_fallback`` because\n\
+        \  codex_pdf 1.7.0's polygon_offset rejects non-rect paths on\n  pyclipr 0.1.8 — temporary upstream\
+        \ workaround.\n\nExactly one of ``rect_pt`` / ``polygon_pt`` must be set; the\nschema's ``model_validator``\
+        \ enforces that."
+    ValidateRequest:
+      properties:
+        template:
+          additionalProperties: true
+          type: object
+          title: Template
+      additionalProperties: false
+      type: object
+      required:
+      - template
+      title: ValidateRequest
+      description: Request for template validation — raw dict validated inside the handler.
+    ValidateResponse:
+      properties:
+        valid:
+          type: boolean
+          title: Valid
+        mark_count:
+          type: integer
+          title: Mark Count
+      additionalProperties: false
+      type: object
+      required:
+      - valid
+      - mark_count
+      title: ValidateResponse
+      description: Result of a successful template validation.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    VersionResponse:
+      properties:
+        version:
+          type: string
+          title: Version
+      type: object
+      required:
+      - version
+      title: VersionResponse
+    WhiteUnderbaseApplyRequest:
+      properties:
+        input_pdf_b64:
+          type: string
+          minLength: 1
+          title: Input Pdf B64
+        policy:
+          $ref: '#/components/schemas/WhiteUnderbasePolicy'
+      additionalProperties: false
+      type: object
+      required:
+      - input_pdf_b64
+      title: WhiteUnderbaseApplyRequest
+      description: 'Request envelope.
+
+
+        Mirrors the trap / soft-proof / impose request shape: input PDF
+
+        inline as base64, policy as a typed Pydantic object.'
+    WhiteUnderbaseApplyResponse:
+      properties:
+        output_pdf_b64:
+          type: string
+          title: Output Pdf B64
+        pdf_sha256:
+          type: string
+          title: Pdf Sha256
+        input_sha256:
+          type: string
+          title: Input Sha256
+        policy_sha256:
+          type: string
+          title: Policy Sha256
+        cache_key:
+          type: string
+          title: Cache Key
+        cache_hit:
+          type: boolean
+          title: Cache Hit
+          default: false
+        summary:
+          $ref: '#/components/schemas/WhiteUnderbaseSummary'
+        schema_version:
+          type: string
+          title: Schema Version
+        compile_version:
+          type: string
+          title: Compile Version
+      additionalProperties: false
+      type: object
+      required:
+      - output_pdf_b64
+      - pdf_sha256
+      - input_sha256
+      - policy_sha256
+      - cache_key
+      - summary
+      - schema_version
+      - compile_version
+      title: WhiteUnderbaseApplyResponse
+      description: 'Response envelope.
+
+
+        Mirrors the soft-proof / trap response shape so operator
+
+        tooling can treat every producer the same way.'
+    WhiteUnderbasePolicy:
+      properties:
+        separation_name:
+          type: string
+          maxLength: 64
+          minLength: 1
+          title: Separation Name
+          description: Name of the new DeviceN separation to add to the output PDF. Conventionally 'White'
+            for white ink, 'Underbase' for screen printing, 'Varnish' for spot UV, or 'Foil' for foil-stamp
+            masks.
+          default: White
+        plate_use:
+          type: string
+          enum:
+          - white
+          - underbase
+          - varnish
+          - foil
+          title: Plate Use
+          description: Semantic role of the plate. Affects DeviceN colorant metadata so downstream RIPs
+            treat the plate correctly.
+          default: white
+        strategy:
+          type: string
+          enum:
+          - auto
+          - union
+          - knockout
+          - manual
+          title: Strategy
+          description: How to derive the plate from existing ink coverage. See :data:`GenerationStrategy`
+            for the strategy catalogue.
+          default: auto
+        knockout_threshold_pct:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Knockout Threshold Pct
+          description: Minimum cumulative CMYK ink coverage (%, 0-100) to trigger white plate deposition
+            under 'auto' / 'knockout' strategies. 5% is the practical floor for most flexo / offset workflows;
+            lower values risk noise from rasterized anti-aliasing edges.
+          default: 5.0
+        choke_pt:
+          type: number
+          maximum: 2.0
+          minimum: -2.0
+          title: Choke Pt
+          description: Shrink (negative) or grow (positive) the generated white plate by this many points
+            relative to the source geometry. Used to compensate for press misregistration; 0pt is the
+            default (exact match). Typical print-shop values are -0.3pt for white-under-colour, +0.5pt
+            for underbase-with-bleed.
+          default: 0.0
+        page_indices:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          title: Page Indices
+          description: Restrict generation to these 0-indexed pages. None means every page in the input
+            PDF gets a white plate. Useful when a multi-page job has only some pages printing on dark
+            substrate.
+      additionalProperties: false
+      type: object
+      title: WhiteUnderbasePolicy
+      description: 'Generation policy controlling the white-plate output.
+
+
+        All knobs are optional with sensible defaults; the most common
+
+        real-world request is ``{"separation_name": "White"}`` with
+
+        everything else inherited.'
+    WhiteUnderbaseSummary:
+      properties:
+        pages_processed:
+          type: integer
+          minimum: 0.0
+          title: Pages Processed
+          description: Number of pages a white plate was added to.
+        separation_name:
+          type: string
+          title: Separation Name
+          description: Name the separation was registered under in the output PDF.
+        plate_use:
+          type: string
+          enum:
+          - white
+          - underbase
+          - varnish
+          - foil
+          title: Plate Use
+          description: Semantic role recorded on the separation.
+        strategy_applied:
+          type: string
+          enum:
+          - auto
+          - union
+          - knockout
+          - manual
+          title: Strategy Applied
+          description: Strategy actually applied (matches the request).
+      additionalProperties: false
+      type: object
+      required:
+      - pages_processed
+      - separation_name
+      - plate_use
+      - strategy_applied
+      title: WhiteUnderbaseSummary
+      description: 'Engine-side telemetry surfaced on the response so callers
+
+        can show ''how much white did this generate?'' in the editor UI.'

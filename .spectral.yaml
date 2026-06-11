@@ -1,0 +1,10 @@
+extends:
+  - spectral:oas
+rules:
+  # FastAPI emits OAS 3.1 (tuples via prefixItems, type:[T,"null"] unions).
+  # These spectral:oas rules are OAS-3.0-centric and misfire on valid 3.1
+  # constructs, so downgrade them to warnings rather than failing the build.
+  oas3-schema: warn
+  array-items: warn
+  # Tags are informational; we don't maintain a global tag registry.
+  operation-tag-defined: off
