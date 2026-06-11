@@ -12,13 +12,13 @@ from __future__ import annotations
 
 from typing import Literal
 
+from compile_pdf_impose.api import ImposeApplyRequest
+from compile_pdf_marks.api import MarksApplyRequest
+from compile_pdf_rewrite.api import RewriteApplyRequest
+from compile_pdf_trap.api import TrapApplyRequest
 from pydantic import BaseModel, Field
 
-from compile_pdf.impose.api import ImposeApplyRequest
-from compile_pdf.marks.api import MarksApplyRequest
-from compile_pdf.rewrite.api import RewriteApplyRequest
 from compile_pdf.soft_proof.schema import SoftProofApplyRequest
-from compile_pdf.trap.api import TrapApplyRequest
 
 SUPPORTED_PRODUCERS = ("rewrite", "marks", "impose", "trap", "soft_proof")
 """Producers whose output is a PDF and thus eligible for streaming.

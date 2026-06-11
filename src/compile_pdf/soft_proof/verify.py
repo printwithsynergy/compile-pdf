@@ -1,6 +1,6 @@
 """Post-condition checks for the soft-proof engine output.
 
-Mirrors :mod:`compile_pdf.trap.verify` — these run after the
+Mirrors :mod:`compile_pdf_trap.verify` — these run after the
 engine returns and before the API hands the response back. The
 goal is to catch silent corruption (engine produced empty bytes,
 broken PDF signature, etc.) at the producer boundary rather than

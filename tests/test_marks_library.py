@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import pytest
-
-from compile_pdf.marks.library import (
+from compile_pdf_marks.library import (
     MarkRenderError,
     PageGeometry,
     render,
@@ -22,7 +21,7 @@ from compile_pdf.marks.library import (
     render_slug_text,
     render_tile_stitch,
 )
-from compile_pdf.marks.template_schema import (
+from compile_pdf_marks.template_schema import (
     BleedMark,
     CenterMark,
     ColorBar,

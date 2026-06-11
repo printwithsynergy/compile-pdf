@@ -5,10 +5,9 @@ from __future__ import annotations
 import io
 
 import pikepdf
-
-from compile_pdf.rewrite.engine import apply_plan
-from compile_pdf.rewrite.plan_schema import RewritePlan
-from compile_pdf.rewrite.verify import verify_rewrite
+from compile_pdf_rewrite.engine import apply_plan
+from compile_pdf_rewrite.plan_schema import RewritePlan
+from compile_pdf_rewrite.verify import verify_rewrite
 
 
 def _plan(ops: list[dict[str, object]]) -> RewritePlan:

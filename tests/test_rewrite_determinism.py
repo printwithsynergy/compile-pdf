@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compile_pdf.rewrite.engine import apply_plan
-from compile_pdf.rewrite.plan_schema import RewritePlan
+from compile_pdf_rewrite.engine import apply_plan
+from compile_pdf_rewrite.plan_schema import RewritePlan
 
 
 def test_three_runs_byte_identical(three_page_pdf: bytes) -> None:

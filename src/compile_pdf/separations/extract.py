@@ -2,7 +2,7 @@
 """Walk an input PDF and enumerate every named separation per page.
 
 Re-uses the Separation / DeviceN parsing pattern from
-:mod:`compile_pdf.trap.extract` but is purpose-built for "list all
+:mod:`compile_pdf_trap.extract` but is purpose-built for "list all
 inks per page" — the trap version is scoped to "spot rectangles
 adjacent to other spots", which is a different concern.
 

@@ -17,7 +17,8 @@ import base64
 import hashlib
 from dataclasses import dataclass
 
-from compile_pdf.cache import compute_cache_key, hash_canonical_plan
+from compile_pdf_core.cache import compute_cache_key, hash_canonical_plan
+
 from compile_pdf.stream.schema import (
     SUPPORTED_PRODUCERS,
     ProducerName,
@@ -119,8 +120,8 @@ def _dispatch_rewrite(payload: dict[str, object]) -> tuple[bytes, str]:
     Returns ``(output_bytes, plan_sha256)``. The plan_sha256 is
     threaded back to ``dispatch_stream`` for cache-key computation.
     """
-    from compile_pdf.rewrite.engine import RewritePlanError, apply_plan
-    from compile_pdf.rewrite.plan_schema import RewritePlan
+    from compile_pdf_rewrite.engine import RewritePlanError, apply_plan
+    from compile_pdf_rewrite.plan_schema import RewritePlan
 
     input_bytes = _decode_input_pdf(payload)
     try:
@@ -136,8 +137,8 @@ def _dispatch_rewrite(payload: dict[str, object]) -> tuple[bytes, str]:
 
 
 def _dispatch_marks(payload: dict[str, object]) -> tuple[bytes, str]:
-    from compile_pdf.marks.engine import MarksTemplateError, apply_template
-    from compile_pdf.marks.template_schema import MarksTemplate
+    from compile_pdf_marks.engine import MarksTemplateError, apply_template
+    from compile_pdf_marks.template_schema import MarksTemplate
 
     input_bytes = _decode_input_pdf(payload)
     try:
@@ -153,8 +154,8 @@ def _dispatch_marks(payload: dict[str, object]) -> tuple[bytes, str]:
 
 
 def _dispatch_impose(payload: dict[str, object]) -> tuple[bytes, str]:
-    from compile_pdf.impose.engine import ImposePlanError, apply_plan
-    from compile_pdf.impose.layout_schema import ImposePlan
+    from compile_pdf_impose.engine import ImposePlanError, apply_plan
+    from compile_pdf_impose.layout_schema import ImposePlan
 
     input_bytes = _decode_input_pdf(payload)
     try:
@@ -170,8 +171,8 @@ def _dispatch_impose(payload: dict[str, object]) -> tuple[bytes, str]:
 
 
 def _dispatch_trap(payload: dict[str, object]) -> tuple[bytes, str]:
-    from compile_pdf.trap.engine import TrapEngineError, apply_policy
-    from compile_pdf.trap.policy_schema import TrapPolicy
+    from compile_pdf_trap.engine import TrapEngineError, apply_policy
+    from compile_pdf_trap.policy_schema import TrapPolicy
 
     input_bytes = _decode_input_pdf(payload)
     try:

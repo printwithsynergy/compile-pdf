@@ -5,16 +5,15 @@ from __future__ import annotations
 import io
 
 import pikepdf
-from pikepdf import Array, Name, String
-
-from compile_pdf.marks.engine import apply_template
-from compile_pdf.marks.template_schema import (
+from compile_pdf_marks.engine import apply_template
+from compile_pdf_marks.template_schema import (
     MarksTemplate,
     ProofSlug,
     RegisterMark,
     SlugText,
 )
-from compile_pdf.marks.verify import verify_marks
+from compile_pdf_marks.verify import verify_marks
+from pikepdf import Array, Name, String
 
 
 def test_verify_passes_on_clean_apply(printer_pdf: bytes) -> None:

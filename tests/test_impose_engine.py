@@ -6,17 +6,16 @@ import io
 
 import pikepdf
 import pytest
-from pikepdf import Name
-
-from compile_pdf.impose.engine import ImposePlanError, apply_plan
-from compile_pdf.impose.layout_schema import (
+from compile_pdf_impose.engine import ImposePlanError, apply_plan
+from compile_pdf_impose.layout_schema import (
     Cell,
     ExplicitPlacement,
     Gutter,
     ImposePlan,
     Sheet,
 )
-from compile_pdf.impose.verify import verify_impose
+from compile_pdf_impose.verify import verify_impose
+from pikepdf import Name
 
 
 def _plan_2x2(**overrides) -> ImposePlan:

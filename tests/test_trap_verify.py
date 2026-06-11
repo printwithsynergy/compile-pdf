@@ -5,11 +5,10 @@ from __future__ import annotations
 import io
 
 import pikepdf
+from compile_pdf_trap.engine import apply_policy
+from compile_pdf_trap.policy_schema import TrapPolicy, TrapZone
+from compile_pdf_trap.verify import verify_trap
 from pikepdf import String
-
-from compile_pdf.trap.engine import apply_policy
-from compile_pdf.trap.policy_schema import TrapPolicy, TrapZone
-from compile_pdf.trap.verify import verify_trap
 
 
 def _policy() -> TrapPolicy:
@@ -48,7 +47,7 @@ def test_verify_layer2_skipped_for_non_pure_python(simple_pdf: bytes) -> None:
     contract alone — replay byte-identity is not required cross-engine."""
     # We can't actually run those engines (they raise), but we can craft
     # a TrapResult by hand and confirm L2 honors the carve-out.
-    from compile_pdf.trap.engine import TrapResult
+    from compile_pdf_trap.engine import TrapResult
 
     result = apply_policy(simple_pdf, _policy())
     forged = TrapResult(
@@ -73,7 +72,7 @@ def test_verify_layer3_detects_metadata_change(simple_pdf: bytes) -> None:
     pdf.close()
     tampered = out.getvalue()
 
-    from compile_pdf.trap.engine import TrapResult
+    from compile_pdf_trap.engine import TrapResult
 
     bogus = TrapResult(
         output_bytes=tampered,

@@ -5,11 +5,10 @@ from __future__ import annotations
 import io
 
 import pikepdf
+from compile_pdf_impose.engine import apply_plan
+from compile_pdf_impose.layout_schema import Cell, Gutter, ImposePlan, Sheet
+from compile_pdf_impose.verify import verify_impose
 from pikepdf import Array, Name, String
-
-from compile_pdf.impose.engine import apply_plan
-from compile_pdf.impose.layout_schema import Cell, Gutter, ImposePlan, Sheet
-from compile_pdf.impose.verify import verify_impose
 
 
 def _plan(**overrides) -> ImposePlan:

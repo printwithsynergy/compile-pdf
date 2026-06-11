@@ -34,7 +34,7 @@ router = APIRouter()
 
 
 def _resolve_codex_pdf_version() -> str:
-    """Mirror of the helper in :mod:`compile_pdf.trap.api`.
+    """Mirror of the helper in :mod:`compile_pdf_trap.api`.
 
     Duplicated rather than imported so the producer modules stay
     independent — the trap producer can ship a fix to its codex

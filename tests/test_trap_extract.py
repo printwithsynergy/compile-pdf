@@ -6,9 +6,8 @@ import io
 
 import pikepdf
 import pytest
+from compile_pdf_trap.extract import auto_trap_zones, extract_ink_rects
 from pikepdf import Array, Dictionary, Name
-
-from compile_pdf.trap.extract import auto_trap_zones, extract_ink_rects
 
 
 def _spot_separation(pdf: pikepdf.Pdf, ink_name: str, c1: list[float]) -> pikepdf.Object:

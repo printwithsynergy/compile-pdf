@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import pytest
-
-from compile_pdf.marks.library import PageGeometry, render, render_step_repeat
-from compile_pdf.marks.template_schema import (
+from compile_pdf_marks.library import PageGeometry, render, render_step_repeat
+from compile_pdf_marks.template_schema import (
     MarksTemplate,
     StepRepeatMark,
     marks_template_json_schema,

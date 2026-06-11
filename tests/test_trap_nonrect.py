@@ -6,12 +6,11 @@ import io
 
 import pikepdf
 import pytest
+from compile_pdf_trap.engine import apply_policy
+from compile_pdf_trap.policy_schema import TrapPolicy, TrapZone
+from compile_pdf_trap.verify import verify_trap
 from pikepdf import Array, Dictionary, Name
 from pydantic import ValidationError
-
-from compile_pdf.trap.engine import apply_policy
-from compile_pdf.trap.policy_schema import TrapPolicy, TrapZone
-from compile_pdf.trap.verify import verify_trap
 
 
 def _make_pdf() -> bytes:

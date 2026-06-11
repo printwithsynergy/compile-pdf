@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compile_pdf.marks.engine import apply_template
-from compile_pdf.marks.template_schema import (
+from compile_pdf_marks.engine import apply_template
+from compile_pdf_marks.template_schema import (
     BleedMark,
     CenterMark,
     ColorBar,

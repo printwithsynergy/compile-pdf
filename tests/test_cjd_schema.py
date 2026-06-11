@@ -5,9 +5,7 @@ from __future__ import annotations
 import base64
 
 import pytest
-from pydantic import ValidationError
-
-from compile_pdf.cjd.schema import (
+from compile_pdf_cjd.schema import (
     PRODUCER_ORDER,
     CjdImposeStep,
     CjdJob,
@@ -16,6 +14,7 @@ from compile_pdf.cjd.schema import (
     CjdTrapStep,
     cjd_job_json_schema,
 )
+from pydantic import ValidationError
 
 
 def _b64(payload: bytes = b"%PDF-1.4\n%EOF") -> str:
