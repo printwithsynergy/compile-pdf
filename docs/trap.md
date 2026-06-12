@@ -36,13 +36,21 @@ observable.
     { "from": "Y",        "to": "PMS 185", "width_pt": 0.072, "direction": "choke"  }
   ],
   "neutral_density_source": "codex_extract",
-  "engine": "auto"
+  "engine": "auto",
+  "output_trap_layer": true
 }
 ```
 
 `direction`:
 - **spread** — the lighter ink expands into the darker.
 - **choke**  — the lighter ink contracts away from the darker.
+
+`output_trap_layer`:
+- When `true` (default for the marketing demo), the trapped PDF includes a named
+  **Optional Content Group (OCG) layer** called `Trap` that can be toggled on/off
+  in any OCG-aware viewer (Acrobat, lens-pdf, etc.). This makes trap coverage
+  visually inspectable without re-running the engine.
+- Set to `false` to suppress the extra OCG and produce a flat-merged output PDF.
 
 Direction defaults can be derived from neutral-density values, which
 Compile reads from the Codex extract — no Compile-side density math.
