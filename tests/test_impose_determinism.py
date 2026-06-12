@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compile_pdf.impose.engine import apply_plan
-from compile_pdf.impose.layout_schema import Cell, Gutter, ImposePlan, Sheet
+from compile_pdf_impose.engine import apply_plan
+from compile_pdf_impose.layout_schema import Cell, Gutter, ImposePlan, Sheet
 
 
 def test_determinism_simple_2x2(four_page_content_pdf: bytes) -> None:

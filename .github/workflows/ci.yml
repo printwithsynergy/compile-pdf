@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -39,6 +41,12 @@ jobs:
       - name: Consume-surface audit (spec §7.5)
         run: uv run python scripts/consume_surface_audit.py
 
+      - name: OpenAPI spec is up to date
+        run: |
+          uv run python scripts/dump_openapi.py
+          git diff --exit-code docs/openapi.yaml \
+            || { echo "::error::docs/openapi.yaml is stale — run scripts/dump_openapi.py and commit."; exit 1; }
+
       - name: Pytest with coverage
         run: uv run pytest --cov=compile_pdf --cov-report=term-missing --cov-fail-under=70
 
@@ -49,3 +57,49 @@ jobs:
           name: consume-surface-audit
           path: reports/audit/consume_surface.json
           if-no-files-found: ignore
+
+  security:
+    name: security scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.4.20"
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install project (with dev extras)
+        run: uv sync --extra dev
+
+      - name: Semgrep (security-audit + secrets)
+        run: |
+          pip install semgrep==1.165.0 --quiet
+          semgrep scan --error --config p/security-audit --config p/secrets --config p/python src
+
+      - name: Bandit (medium severity + confidence)
+        run: |
+          uv run pip install bandit --quiet
+          uv run bandit -r src --severity-level medium --confidence-level medium
+
+  spectral:
+    name: OpenAPI spectral lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral-cli
+      - name: Lint OpenAPI spec
+        run: spectral lint docs/openapi.yaml --ruleset .spectral.yaml

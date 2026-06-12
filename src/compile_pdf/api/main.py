@@ -26,6 +26,9 @@ from typing import Any
 
 import structlog
 from codex_pdf.errors import PROBLEM_CONTENT_TYPE, build_problem, problems
+from compile_pdf_core.api.auth import authenticate
+from compile_pdf_core.api.middleware import INSTANCE_ID, RequestIdMiddleware
+from compile_pdf_core.queue_status import resolve_queue_depth
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
@@ -33,9 +36,6 @@ from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import JSONResponse, Response
 
-from compile_pdf.api.auth import authenticate
-from compile_pdf.api.middleware import INSTANCE_ID, RequestIdMiddleware
-from compile_pdf.queue_status import resolve_queue_depth
 from compile_pdf.version import (
     CODEX_DOCUMENT_SCHEMA_VERSION_PIN,
     COMPILE_DOCUMENT_SCHEMA_VERSION,
@@ -315,7 +315,7 @@ def _maybe_mount_routers() -> None:
     active = _resolve_active_producer()
     if active in {"rewrite", "all"}:
         try:
-            from compile_pdf.rewrite.api import router as rewrite_router
+            from compile_pdf_rewrite.api import router as rewrite_router
 
             app.include_router(
                 rewrite_router,
@@ -327,7 +327,7 @@ def _maybe_mount_routers() -> None:
             logger.debug("rewrite_router_not_yet_available")
     if active in {"marks", "all"}:
         try:
-            from compile_pdf.marks.api import router as marks_router
+            from compile_pdf_marks.api import router as marks_router
 
             app.include_router(
                 marks_router,
@@ -339,7 +339,7 @@ def _maybe_mount_routers() -> None:
             logger.debug("marks_router_not_yet_available")
     if active in {"impose", "all"}:
         try:
-            from compile_pdf.impose.api import router as impose_router
+            from compile_pdf_impose.api import router as impose_router
 
             app.include_router(
                 impose_router,
@@ -351,7 +351,7 @@ def _maybe_mount_routers() -> None:
             logger.debug("impose_router_not_yet_available")
     if active in {"trap", "all"}:
         try:
-            from compile_pdf.trap.api import router as trap_router
+            from compile_pdf_trap.api import router as trap_router
 
             app.include_router(
                 trap_router,
@@ -363,7 +363,7 @@ def _maybe_mount_routers() -> None:
             logger.debug("trap_router_not_yet_available")
     if active in {"soft_proof", "all"}:
         try:
-            from compile_pdf.soft_proof.api import router as soft_proof_router
+            from compile_pdf_soft_proof.api import router as soft_proof_router
 
             app.include_router(
                 soft_proof_router,
@@ -375,7 +375,7 @@ def _maybe_mount_routers() -> None:
             logger.debug("soft_proof_router_not_yet_available")
     if active in {"white_underbase", "all"}:
         try:
-            from compile_pdf.white_underbase.api import router as white_underbase_router
+            from compile_pdf_white_underbase.api import router as white_underbase_router
 
             app.include_router(
                 white_underbase_router,
@@ -387,7 +387,7 @@ def _maybe_mount_routers() -> None:
             logger.debug("white_underbase_router_not_yet_available")
     if active == "all":
         try:
-            from compile_pdf.cjd.api import cjd_router, lineage_router
+            from compile_pdf_cjd.api import cjd_router, lineage_router
 
             app.include_router(cjd_router, prefix="/v1/cjd", tags=["cjd"], dependencies=_AUTH_DEPS)
             app.include_router(
@@ -399,7 +399,7 @@ def _maybe_mount_routers() -> None:
         except ImportError:
             logger.debug("cjd_router_not_yet_available")
         try:
-            from compile_pdf.retention.api import router as retention_router
+            from compile_pdf_core.retention.api import router as retention_router
 
             app.include_router(
                 retention_router,
@@ -419,7 +419,7 @@ _maybe_mount_routers()
 # every artwork-pdf editor instance needs it at boot regardless of
 # which producer this server runs.
 try:
-    from compile_pdf.spots.api import router as spots_router
+    from compile_pdf_core.spots.api import router as spots_router
 
     app.include_router(spots_router, prefix="/v1/spots", tags=["spots"], dependencies=_AUTH_DEPS)
 except ImportError:
@@ -430,7 +430,7 @@ except ImportError:
 # (read-only metadata over the supplied PDF, no producer state).
 # Editor surface: artwork-pdf's C1 inks palette (Wave 2 PR-5).
 try:
-    from compile_pdf.separations.api import router as separations_router
+    from compile_pdf_separations.api import router as separations_router
 
     app.include_router(
         separations_router,
@@ -447,7 +447,7 @@ except ImportError:
 # so a single deploy can serve both JSON-shaped /apply and chunked
 # PDF streaming without flipping COMPILE_PRODUCER.
 try:
-    from compile_pdf.stream.api import router as stream_router
+    from compile_pdf_stream.api import router as stream_router
 
     app.include_router(
         stream_router,

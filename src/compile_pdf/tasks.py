@@ -81,10 +81,10 @@ def _register_tasks(app: Celery) -> None:
     place for readers without poisoning the rest of the module.
     """
 
-    @app.task(name="compile_pdf.rewrite.apply")  # type: ignore[untyped-decorator]
+    @app.task(name="compile_pdf_rewrite.apply")  # type: ignore[untyped-decorator]
     def rewrite_apply(payload: dict[str, Any]) -> dict[str, Any]:
-        from compile_pdf.rewrite.engine import apply_plan
-        from compile_pdf.rewrite.plan_schema import RewritePlan
+        from compile_pdf_rewrite.engine import apply_plan
+        from compile_pdf_rewrite.plan_schema import RewritePlan
 
         input_bytes = base64.b64decode(payload["input_pdf_b64"], validate=True)
         plan = RewritePlan.model_validate(payload["plan"])
@@ -95,10 +95,10 @@ def _register_tasks(app: Celery) -> None:
             "ops_applied": result.ops_applied,
         }
 
-    @app.task(name="compile_pdf.marks.apply")  # type: ignore[untyped-decorator]
+    @app.task(name="compile_pdf_marks.apply")  # type: ignore[untyped-decorator]
     def marks_apply(payload: dict[str, Any]) -> dict[str, Any]:
-        from compile_pdf.marks.engine import apply_template
-        from compile_pdf.marks.template_schema import MarksTemplate
+        from compile_pdf_marks.engine import apply_template
+        from compile_pdf_marks.template_schema import MarksTemplate
 
         input_bytes = base64.b64decode(payload["input_pdf_b64"], validate=True)
         template = MarksTemplate.model_validate(payload["template"])
@@ -109,10 +109,10 @@ def _register_tasks(app: Celery) -> None:
             "marks_applied": result.marks_applied,
         }
 
-    @app.task(name="compile_pdf.impose.apply")  # type: ignore[untyped-decorator]
+    @app.task(name="compile_pdf_impose.apply")  # type: ignore[untyped-decorator]
     def impose_apply(payload: dict[str, Any]) -> dict[str, Any]:
-        from compile_pdf.impose.engine import apply_plan
-        from compile_pdf.impose.layout_schema import ImposePlan
+        from compile_pdf_impose.engine import apply_plan
+        from compile_pdf_impose.layout_schema import ImposePlan
 
         input_bytes = base64.b64decode(payload["input_pdf_b64"], validate=True)
         plan = ImposePlan.model_validate(payload["plan"])
@@ -125,10 +125,10 @@ def _register_tasks(app: Celery) -> None:
             "input_pages": result.input_pages,
         }
 
-    @app.task(name="compile_pdf.trap.apply")  # type: ignore[untyped-decorator]
+    @app.task(name="compile_pdf_trap.apply")  # type: ignore[untyped-decorator]
     def trap_apply(payload: dict[str, Any]) -> dict[str, Any]:
-        from compile_pdf.trap.engine import apply_policy
-        from compile_pdf.trap.policy_schema import TrapPolicy
+        from compile_pdf_trap.engine import apply_policy
+        from compile_pdf_trap.policy_schema import TrapPolicy
 
         input_bytes = base64.b64decode(payload["input_pdf_b64"], validate=True)
         policy = TrapPolicy.model_validate(payload["policy"])
@@ -142,10 +142,10 @@ def _register_tasks(app: Celery) -> None:
             "trap_diff": result.trap_diff,
         }
 
-    @app.task(name="compile_pdf.cjd.execute")  # type: ignore[untyped-decorator]
+    @app.task(name="compile_pdf_cjd.execute")  # type: ignore[untyped-decorator]
     def cjd_execute(job_payload: dict[str, Any]) -> dict[str, Any]:
-        from compile_pdf.cjd.orchestrator import execute
-        from compile_pdf.cjd.schema import CjdJob
+        from compile_pdf_cjd.orchestrator import execute
+        from compile_pdf_cjd.schema import CjdJob
 
         job = CjdJob.model_validate(job_payload)
         result = execute(job)

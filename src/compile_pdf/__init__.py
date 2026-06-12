@@ -2,12 +2,12 @@
 
 Four producers under one package:
 
-- :mod:`compile_pdf.rewrite` — single-PDF-in/out object-tree mutations
+- :mod:`compile_pdf_rewrite` — single-PDF-in/out object-tree mutations
   (OCG flips, metadata, color-space swap, hygiene strips, lifecycle ops)
-- :mod:`compile_pdf.marks` — register/crop/color-bar/fold marks plus
+- :mod:`compile_pdf_marks` — register/crop/color-bar/fold marks plus
   1-up proofing slugs and external mark template ingestion
-- :mod:`compile_pdf.impose` — sheet-level step-and-repeat layout
-- :mod:`compile_pdf.trap` — ink-pair spread/choke trap with three
+- :mod:`compile_pdf_impose` — sheet-level step-and-repeat layout
+- :mod:`compile_pdf_trap` — ink-pair spread/choke trap with three
   engine slots (pure_python / ghostscript / external)
 
 Architectural invariants:

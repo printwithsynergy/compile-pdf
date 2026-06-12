@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
-
-from compile_pdf.marks.template_schema import (
+from compile_pdf_marks.template_schema import (
     BleedMark,
     CenterMark,
     ColorBar,
@@ -22,6 +20,7 @@ from compile_pdf.marks.template_schema import (
     TileStitchMark,
     marks_template_json_schema,
 )
+from pydantic import ValidationError
 
 
 def test_template_accepts_all_twelve_mark_types() -> None:

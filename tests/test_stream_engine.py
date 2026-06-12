@@ -10,12 +10,11 @@ from __future__ import annotations
 import base64
 
 import pytest
-
-from compile_pdf.stream.engine import (
+from compile_pdf_stream.engine import (
     StreamEngineError,
     dispatch_stream,
 )
-from compile_pdf.stream.schema import SUPPORTED_PRODUCERS
+from compile_pdf_stream.schema import SUPPORTED_PRODUCERS
 
 
 def _b64(data: bytes) -> str:
@@ -68,7 +67,7 @@ def test_supported_producers_is_complete() -> None:
     """The dispatch table must cover every entry in
     :data:`SUPPORTED_PRODUCERS` — otherwise the wrapper would
     accept a request it can't actually route."""
-    from compile_pdf.stream.engine import _DISPATCH
+    from compile_pdf_stream.engine import _DISPATCH
 
     assert set(_DISPATCH.keys()) == set(SUPPORTED_PRODUCERS)
 
@@ -116,7 +115,7 @@ def test_soft_proof_dispatch_returns_pdf(simple_pdf: bytes) -> None:
 def test_unreachable_schema_version_branch_raises() -> None:
     """Defense-in-depth: ``_producer_schema_version`` raises if
     called with a producer outside the typed enum."""
-    from compile_pdf.stream.engine import _producer_schema_version
+    from compile_pdf_stream.engine import _producer_schema_version
 
     with pytest.raises(StreamEngineError, match="unknown producer"):
         _producer_schema_version("nope")  # type: ignore[arg-type]

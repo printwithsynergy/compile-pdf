@@ -5,10 +5,10 @@ from __future__ import annotations
 import base64
 
 import pytest
+from compile_pdf_core.lineage.store import reset_default_store
 from fastapi.testclient import TestClient
 
 from compile_pdf.api.main import app
-from compile_pdf.lineage.store import reset_default_store
 
 
 @pytest.fixture(autouse=True)

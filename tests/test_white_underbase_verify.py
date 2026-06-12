@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from compile_pdf.white_underbase.engine import (
+from compile_pdf_white_underbase.engine import (
     WhiteUnderbaseResult,
     apply_white_underbase,
 )
-from compile_pdf.white_underbase.schema import (
+from compile_pdf_white_underbase.schema import (
     WhiteUnderbasePolicy,
     WhiteUnderbaseSummary,
 )
-from compile_pdf.white_underbase.verify import verify_white_underbase
+from compile_pdf_white_underbase.verify import verify_white_underbase
 
 
 def test_verify_accepts_passthrough_result(simple_pdf: bytes) -> None:
@@ -50,9 +50,7 @@ def test_verify_rejects_non_pdf_output(simple_pdf: bytes) -> None:
     assert any("%PDF" in f for f in check.failures)
 
 
-def test_verify_rejects_page_count_mismatch(
-    simple_pdf: bytes, three_page_pdf: bytes
-) -> None:
+def test_verify_rejects_page_count_mismatch(simple_pdf: bytes, three_page_pdf: bytes) -> None:
     """If the output's page count differs from the input, verify must fail."""
     bad = WhiteUnderbaseResult(
         output_bytes=three_page_pdf,

@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import pytest
-
-from compile_pdf.lineage.store import (
+from compile_pdf_core.lineage.store import (
     LineageBackendError,
     LineageNotFoundError,
     LineageStep,

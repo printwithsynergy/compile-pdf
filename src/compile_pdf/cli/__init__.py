@@ -104,13 +104,13 @@ def schema_cmd(name: str) -> None:
 # themselves onto this group when imported. Phase 1.x lands rewrite first.
 def _register_producer_subcommands() -> None:
     for module_name, _sub_name in (
-        ("compile_pdf.rewrite.cli", "rewrite"),
-        ("compile_pdf.marks.cli", "marks"),
-        ("compile_pdf.impose.cli", "impose"),
-        ("compile_pdf.trap.cli", "trap"),
-        ("compile_pdf.cjd.cli", "cjd"),
-        ("compile_pdf.stream.cli", "stream"),
-        ("compile_pdf.white_underbase.cli", "white-underbase"),
+        ("compile_pdf_rewrite.cli", "rewrite"),
+        ("compile_pdf_marks.cli", "marks"),
+        ("compile_pdf_impose.cli", "impose"),
+        ("compile_pdf_trap.cli", "trap"),
+        ("compile_pdf_cjd.cli", "cjd"),
+        ("compile_pdf_stream.cli", "stream"),
+        ("compile_pdf_white_underbase.cli", "white-underbase"),
     ):
         try:
             mod = __import__(module_name, fromlist=["register"])

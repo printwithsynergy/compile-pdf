@@ -8,7 +8,7 @@ Each producer endpoint must:
 * Persist nothing when the header is absent / falsy.
 
 We monkeypatch the boto3 client construction inside
-:class:`compile_pdf.retention.store.RetentionStore` to point at an
+:class:`compile_pdf_core.retention.store.RetentionStore` to point at an
 in-memory fake so the tests run with no real S3.
 """
 
@@ -19,10 +19,10 @@ import json
 from typing import Any
 
 import pytest
+from compile_pdf_core.retention import store as retention_store
 from fastapi.testclient import TestClient
 
 from compile_pdf.api.main import app
-from compile_pdf.retention import store as retention_store
 
 
 def _b64(data: bytes) -> str:

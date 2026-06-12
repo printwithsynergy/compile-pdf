@@ -22,7 +22,7 @@ input + plan, every time.** Anything else corrupts the cache.
 
 ## What the determinism guarantee depends on
 
-The cache key (`src/compile_pdf/cache.py`) includes:
+The cache key (`compile_pdf_core.cache`; main keeps a mirror in `src/compile_pdf/cache.py`) includes:
 
 1. `compile_version` — the Compile package version
 2. `codex_pdf_package_version` — the Codex wheel version

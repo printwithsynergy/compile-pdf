@@ -125,10 +125,36 @@ cache_key:
 
 S3-backed in prod; local fallback for offline dev.
 
+## Producer packaging — imported, not vendored
+
+**No producer source lives in this repo's `src/` anymore.** Every producer
+is a published satellite package, pinned in `pyproject.toml` and imported
+by `api/main.py` / `cli/`:
+
+- Core producers: `compile-pdf-{rewrite,marks,impose,trap}`.
+- Meta-producers (depend on the producers they dispatch):
+  `compile-pdf-cjd`, `compile-pdf-stream`.
+- Standalone producers: `compile-pdf-{separations,soft-proof,
+  white-underbase}` — each owns its own `version.py` schema version,
+  which main's `version.py` re-exports into the `/v1/contract`
+  aggregate.
+- `spots` (read-only PANTONE lookup; not a producer) lives in
+  `compile-pdf-core` (`compile_pdf_core.spots`).
+
+This repo is the **orchestrator + integration shell**: it mounts the
+satellite routers (gated by `COMPILE_PRODUCER`), the always-on metadata
+routers (spots / separations / stream), and the shared `compile-pdf-core`
+plumbing (cache, lineage, retention, auth, schema versions). A producer
+fix lands in its satellite, is published, and main bumps the pin — there
+is no second vendored copy to keep in sync (that duplication caused the
+same bug to be fixed twice). Each satellite was reconciled to be a
+**superset** of what main previously vendored, so consolidation lost no
+capability.
+
 ## Lazy router mounting
 
-`src/compile_pdf/api/main.py:213-286` mounts producer routers on
-demand, gated by `COMPILE_PRODUCER`:
+`src/compile_pdf/api/main.py` mounts producer routers on
+demand (imported from the satellite packages), gated by `COMPILE_PRODUCER`:
 
 - `COMPILE_PRODUCER=all` (default) — mounts all four producers + CJD
   + lineage + retention.

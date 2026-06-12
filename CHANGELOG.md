@@ -4,6 +4,24 @@ All notable changes to compile-pdf will be documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6] — 2026-06-04
+
+### Security
+
+- **XXE (CJD XML parser)**: `src/compile_pdf/cjd/xml.py` imported
+  `tostring` from `xml.etree.ElementTree`. Although parsing was already
+  routed through `defusedxml.ElementTree`, the residual stdlib import
+  was flagged by Semgrep (`python.lang.security.use-defused-xml`).
+  `tostring` now comes from `defusedxml.ElementTree` (which re-exports
+  it). `Element` and `SubElement` are retained from stdlib — they are
+  write-only constructors with no external-entity parsing surface; a
+  `# nosemgrep` annotation with justification suppresses the residual
+  warning on that line.
+- **CI hardening**: added `persist-credentials: false` to the
+  `actions/checkout` step; added a blocking `security` job that runs
+  Semgrep (`--error`, `p/security-audit` + `p/secrets` + `p/python`)
+  and Bandit (medium severity + confidence) on every push and PR.
+
 ## [0.5.2] — 2026-05-12
 
 ### Changed

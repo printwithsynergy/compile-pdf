@@ -8,13 +8,12 @@ HTTP surface; these cover the engine determinism and edge cases.
 from __future__ import annotations
 
 import pytest
-
-from compile_pdf.soft_proof.engine import (
+from compile_pdf_soft_proof.engine import (
     SoftProofEngineError,
     apply_soft_proof,
 )
-from compile_pdf.soft_proof.schema import SoftProofOptions
-from compile_pdf.soft_proof.verify import verify_soft_proof
+from compile_pdf_soft_proof.schema import SoftProofOptions
+from compile_pdf_soft_proof.verify import verify_soft_proof
 
 
 def _opts(**kwargs: object) -> SoftProofOptions:

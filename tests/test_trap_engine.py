@@ -6,10 +6,9 @@ import io
 
 import pikepdf
 import pytest
+from compile_pdf_trap.engine import TrapEngineError, apply_policy
+from compile_pdf_trap.policy_schema import InkPairRule, TrapPolicy, TrapZone
 from pikepdf import Name
-
-from compile_pdf.trap.engine import TrapEngineError, apply_policy
-from compile_pdf.trap.policy_schema import InkPairRule, TrapPolicy, TrapZone
 
 
 def _policy(**kwargs) -> TrapPolicy:

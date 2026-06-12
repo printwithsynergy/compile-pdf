@@ -1,6 +1,6 @@
 ---
 title: "Deploy"
-description: "How to ship CompilePDF — Dockerfile, Railway envelope, the four producer services, and the sibling sidecar pattern."
+description: "How to ship CompilePDF — Dockerfile, Railway envelope, per-producer services, and the sibling sidecar pattern."
 group: "Reference"
 order: 2
 ---
@@ -16,7 +16,8 @@ Build flags:
 
 - `COMPILE_EXTRAS` — comma-separated list. `geom` is required for
   marks / impose / trap; `trap-gs` adds the Ghostscript trap engine.
-- `PRODUCER` — `rewrite` | `marks` | `impose` | `trap` | `all`.
+- `PRODUCER` — `rewrite` | `marks` | `impose` | `trap` |
+  `soft_proof` | `white_underbase` | `all`.
   Selects which router(s) the runtime mounts via `COMPILE_PRODUCER`.
 
 ## Railway envelope
@@ -56,7 +57,7 @@ Tokens / keys come from `COMPILE_BEARER_TOKEN`,
 
 | Variable | Purpose |
 |---|---|
-| `COMPILE_PRODUCER` | Which router(s) to mount (`rewrite` / `marks` / `impose` / `trap` / `all`) |
+| `COMPILE_PRODUCER` | Which producer router(s) to mount (`rewrite` / `marks` / `impose` / `trap` / `soft_proof` / `white_underbase` / `all`); the spots / separations / stream routers are always-on |
 | `COMPILE_AUTH_MODE` | See above |
 | `COMPILE_REDIS_URL` | Celery broker + cache backend |
 | `COMPILE_BUCKET_URL` | S3-compatible base URL for lineage |

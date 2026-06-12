@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compile_pdf.trap.engine import apply_policy
-from compile_pdf.trap.policy_schema import InkPairRule, TrapPolicy, TrapZone
+from compile_pdf_trap.engine import apply_policy
+from compile_pdf_trap.policy_schema import InkPairRule, TrapPolicy, TrapZone
 
 
 def test_pure_python_is_deterministic(simple_pdf: bytes) -> None:

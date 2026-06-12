@@ -5,9 +5,8 @@ from __future__ import annotations
 import base64
 
 import pytest
-
-from compile_pdf.cjd.schema import CjdJob
-from compile_pdf.cjd.xml import CjdXmlError, parse_cjd_xml, render_cjd_xml
+from compile_pdf_cjd.schema import CjdJob
+from compile_pdf_cjd.xml import CjdXmlError, parse_cjd_xml, render_cjd_xml
 
 
 def _b64(data: bytes = b"%PDF-1.4\n%EOF") -> str:
