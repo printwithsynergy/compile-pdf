@@ -17,7 +17,7 @@ Producer subcommands are **registered from the satellite packages**
 `compile_pdf_stream.cli`, `compile_pdf_white_underbase.cli`) when the
 top-level group loads — a satellite absent from the build simply
 doesn't contribute its subcommand. The full roster:
-`compile-pdf {rewrite|marks|impose|trap|cjd|stream|white-underbase|lineage|schema|contract|health|version}`.
+`compile-pdf {rewrite|marks|impose|trap|trap-diff|cjd|stream|white-underbase|lineage|schema|contract|health|version}`.
 
 ## Modes
 

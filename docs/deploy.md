@@ -45,13 +45,14 @@ Set via `COMPILE_AUTH_MODE`:
 |---|---|
 | `none` | No auth (dev only) |
 | `bearer` | `Authorization: Bearer <token>` header required |
-| `api-key` | `X-API-Key: <key>` header required |
-| `internal` | Same-VPC traffic; honors `X-Compile-Source` provenance header |
+| `api-key` | `X-Compile-Key: <key>` header required |
+| `internal` | Same-VPC traffic; `X-Compile-Internal: <token>` header required |
 | `basic` | HTTP Basic; tenant/secret pair |
 
-Tokens / keys come from `COMPILE_BEARER_TOKEN`,
-`COMPILE_API_KEY_LIST`, `COMPILE_BASIC_USER` /
-`COMPILE_BASIC_PASS`. See `.env.example`.
+Tokens / keys come from `COMPILE_BEARER_TOKEN`, `COMPILE_API_KEY`,
+`COMPILE_INTERNAL_TOKEN`, and (for `basic`, gated by
+`COMPILE_BASIC_AUTH_ENABLED`) `COMPILE_BASIC_AUTH_USER` /
+`COMPILE_BASIC_AUTH_PASS`. See `.env.example`.
 
 ## Required env
 
@@ -59,12 +60,12 @@ Tokens / keys come from `COMPILE_BEARER_TOKEN`,
 |---|---|
 | `COMPILE_PRODUCER` | Which producer router(s) to mount (`rewrite` / `marks` / `impose` / `trap` / `soft_proof` / `white_underbase` / `all`); the spots / separations / stream routers are always-on |
 | `COMPILE_AUTH_MODE` | See above |
-| `COMPILE_REDIS_URL` | Celery broker + cache backend |
-| `COMPILE_BUCKET_URL` | S3-compatible base URL for lineage |
-| `COMPILE_BUCKET_KEY` / `_SECRET` | Bucket credentials |
+| `COMPILE_CELERY_BROKER_URL` | Celery broker (async apply queue) |
+| `COMPILE_LINEAGE_S3_BUCKET` | S3-compatible bucket for the lineage store |
+| `COMPILE_LINEAGE_S3_PREFIX` | Key prefix within that bucket (default `lineage`); S3 credentials use the standard AWS SDK env (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_ENDPOINT_URL`) |
 | `CODEX_API_BASE` | Live Codex `/v1/extract` endpoint (used by version-skew check) |
 | `CODEX_BEARER_TOKEN` | Codex auth |
-| `INSTANCE_ID` | Optional override; auto-generated as ULID otherwise |
+| `COMPILE_INSTANCE_ID` | Optional override; falls back to the container hostname |
 | `COMPILE_TRAP_ENGINE` | `pure_python` (default) / `ghostscript` / `external` — only honored on the trap container |
 
 ## Cascade rule
